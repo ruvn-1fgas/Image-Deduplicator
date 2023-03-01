@@ -14,4 +14,5 @@ public:
     int getR();
     int getG();
     int getB();
+    bool operator==(const Pixel &other) const;
 };

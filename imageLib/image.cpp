@@ -122,3 +122,17 @@ void Image::createPNG(std::string filename)
     fclose(fp);
     free(row);
 }
+
+int Image::getWidth()
+{
+    return this->width;
+}
+
+int Image::getHeight()
+{
+    return this->height;
+}
+
+Pixel Image::getPixel(int x, int y){
+    return this->pixels[y * this->width + x];
+}

@@ -3,9 +3,9 @@
 #include <gtk/gtkdialog.h>
 #include <locale>
 #include <iostream>
+#include <windows.h>
 #include "noise/Noise.cpp"
 #include "imageLib/image.cpp"
-#include <windows.h>
 
 static void fileChoserOpenResponse(GtkDialog *dialog, int response)
 {
@@ -102,11 +102,19 @@ static void genImgButton_clicked(GtkWidget *widget, gpointer data)
     GtkWidget *imgCountSlider = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "imgCount");
     int imgCount = gtk_range_get_value(GTK_RANGE(imgCountSlider));
 
+    if (imgCount == 0)
+        return;
+
     GtkWidget *imgDuplSlider = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "imgDupl");
     int imgDupl = gtk_range_get_value(GTK_RANGE(imgDuplSlider));
 
     if (imgCount > 0)
     {
+        // get all images in folder and delete them
+        std::filesystem::path dirPath = "images";
+        for (const auto &entry : std::filesystem::directory_iterator(dirPath))
+            std::filesystem::remove(entry.path());
+
         int imageW = 128;
         int imageH = 128;
 
@@ -116,4 +124,15 @@ static void genImgButton_clicked(GtkWidget *widget, gpointer data)
             img.createPNG("images/img_" + std::to_string(i) + ".png");
         }
     }
+
+    if (imgDupl > 0)
+        while (imgDupl > 0)
+        {
+            int imgNum = rand() % imgCount;
+            std::string imgName = "images/img_" + std::to_string(imgNum) + ".png";
+            std::string newImgName = "images/img_" + std::to_string(imgCount) + ".png";
+            std::filesystem::copy(imgName, newImgName);
+            imgCount++;
+            imgDupl--;
+        }
 }

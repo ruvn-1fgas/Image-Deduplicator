@@ -32,3 +32,8 @@ int Pixel::getB()
 {
     return this->b;
 }
+
+bool Pixel::operator==(const Pixel &other) const
+{
+    return this->r == other.r && this->g == other.g && this->b == other.b;
+}

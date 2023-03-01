@@ -15,4 +15,7 @@ public:
     void setPixel(int x, int y, int r, int g, int b);
     void save(std::string filename);
     void createPNG(std::string filename);
+    int getWidth();
+    int getHeight();
+    Pixel getPixel(int x, int y);
 };

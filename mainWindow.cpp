@@ -9,7 +9,7 @@ static void activate(GtkApplication *app, gpointer user_data)
     GtkWidget *imgCountLabel = gtk_label_new("Количество изображений - 0");
     GtkWidget *imgCountSlider = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 1000, 1);
     GtkWidget *imgDuplLabel = gtk_label_new("Количество дубликатов - 0");
-    GtkWidget *imgDuplSlider = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 1000, 1);
+    GtkWidget *imgDuplSlider = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
 
     GtkWidget *openDirButton = gtk_button_new_with_label("Выбрать директорию");
 
