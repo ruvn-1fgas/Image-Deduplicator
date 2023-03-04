@@ -4,14 +4,15 @@
 #include <locale>
 #include <iostream>
 #include <windows.h>
-#include "noise/Noise.cpp"
+#include <vector>
+#include "methods.cpp"
 #include "imageLib/image.cpp"
 
+static void compareImages(GtkWindow *window, std::wstring directoryPath, int method);
 static void fileChoserOpenResponse(GtkDialog *dialog, int response)
 {
     if (response == GTK_RESPONSE_ACCEPT)
     {
-        std::cout << "Accepted" << '\n';
         GFile *folder = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
 
         GtkWidget *dirLabel = (GtkWidget *)g_object_get_data(G_OBJECT(dialog), "dirLabel");
@@ -78,6 +79,25 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
         g_signal_connect(errorDialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
         return;
     }
+
+    int width = 8, height = 8;
+    Image *img = new Image(width, height);
+    for (int i = 0; i < width; i++)
+        for (int j = 0; j < height; j++)
+            img->setPixel(i, j, rand() % 256, rand() % 256, rand() % 256);
+
+    // save at current directory
+    img->saveBMP(directoryPath + L"\\test.bmp");
+
+    Image *img2 = new Image();
+    img2->loadBMP(directoryPath + L"\\test.bmp");
+
+    img2->saveBMP(directoryPath + L"\\test2.bmp");
+    // compareImages(window, directoryPath, method);
+}
+
+static void compareImages(GtkWindow *window, std::wstring directoryPath, int method)
+{
 }
 
 static void imgCountSlider_changed(GtkWidget *widget, gpointer label)
@@ -89,50 +109,4 @@ static void imgCountSlider_changed(GtkWidget *widget, gpointer label)
         gtk_label_set_text(GTK_LABEL(label), text);
         g_free(text);
     }
-    else if (label == g_object_get_data(G_OBJECT(widget), "imgDuplLabel"))
-    {
-        char *text = g_strdup_printf("Количество дубликатов - %d", value);
-        gtk_label_set_text(GTK_LABEL(label), text);
-        g_free(text);
-    }
-}
-
-static void genImgButton_clicked(GtkWidget *widget, gpointer data)
-{
-    GtkWidget *imgCountSlider = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "imgCount");
-    int imgCount = gtk_range_get_value(GTK_RANGE(imgCountSlider));
-
-    if (imgCount == 0)
-        return;
-
-    GtkWidget *imgDuplSlider = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "imgDupl");
-    int imgDupl = gtk_range_get_value(GTK_RANGE(imgDuplSlider));
-
-    if (imgCount > 0)
-    {
-        // get all images in folder and delete them
-        std::filesystem::path dirPath = "images";
-        for (const auto &entry : std::filesystem::directory_iterator(dirPath))
-            std::filesystem::remove(entry.path());
-
-        int imageW = 128;
-        int imageH = 128;
-
-        for (int i = 0; i < imgCount; i++)
-        {
-            Image img(imageW, imageH);
-            img.createPNG("images/img_" + std::to_string(i) + ".png");
-        }
-    }
-
-    if (imgDupl > 0)
-        while (imgDupl > 0)
-        {
-            int imgNum = rand() % imgCount;
-            std::string imgName = "images/img_" + std::to_string(imgNum) + ".png";
-            std::string newImgName = "images/img_" + std::to_string(imgCount) + ".png";
-            std::filesystem::copy(imgName, newImgName);
-            imgCount++;
-            imgDupl--;
-        }
 }
