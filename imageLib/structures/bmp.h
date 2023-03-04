@@ -1,18 +1,13 @@
 // ifndef
-#ifndef BMP_SIGNATURE_H
-#define BMP_SIGNATURE_H
+#ifndef BMP_STRUCTURE_H
+#define BMP_STRUCTURE_H
 
-typedef unsigned char uchar_t;
-typedef unsigned int uint32_t;
-typedef unsigned short int uint16_t;
-typedef signed int int32_t;
-typedef signed short int int16_t;
-const int BMP_MAGIC_ID = 2;
+#include "types.h"
 
 // Windows BMP-specific format data
 struct bmpfile_magic
 {
-    uchar_t magic[BMP_MAGIC_ID];
+    uchar_t magic[2];
 };
 
 struct bmpfile_header
@@ -38,4 +33,4 @@ struct bmpfile_dib_info
     uint32_t num_important_colors;
 };
 
-#endif // BMP_SIGNATURE_H
+#endif // BMP_STRUCTURE_H
