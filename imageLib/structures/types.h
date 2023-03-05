@@ -1,7 +1,7 @@
 #ifndef TYPES_STRUCTURE_H
 
 typedef unsigned char uchar_t;
-typedef unsigned char uint_t;
+typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;
 typedef unsigned short int uint16_t;
 typedef signed int int32_t;

@@ -87,12 +87,12 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
             img->setPixel(i, j, rand() % 256, rand() % 256, rand() % 256);
 
     // save at current directory
-    img->savePNG(directoryPath + L"\\test.png");
+    img->saveJPG(directoryPath + L"\\test.jpg");
 
     Image *img2 = new Image();
-    img2->loadPNG(directoryPath + L"\\test.png");
+    img2->loadJPG(directoryPath + L"\\test.jpg");
 
-    img2->savePNG(directoryPath + L"\\test2.png");
+    img2->saveJPG(directoryPath + L"\\test2.jpg");
     // compareImages(window, directoryPath, method);
 }
 

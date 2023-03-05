@@ -1,6 +1,7 @@
 #include "image.h"
 #include "structures/bmp.h"
 #include <png.h>
+#include <jpeglib.h>
 #include <filesystem>
 #include <fstream>
 
@@ -82,7 +83,6 @@ void Image::saveBMP(std::wstring filename) const
 
     bmpfile_header header = {0};
     header.bmp_offset = sizeof(bmpfile_magic) + sizeof(bmpfile_header) + sizeof(bmpfile_dib_info);
-    // header.file_size = header.bmp_offset + (this->width % 4 + this->height * 3) * this->height;
     header.file_size = header.bmp_offset + this->width * this->height * 3;
     file.write((char *)&header, sizeof(header));
 
@@ -267,12 +267,79 @@ void Image::loadPNG(std::wstring filename)
 
 void Image::saveJPG(std::wstring filename) const
 {
-    // TODO
+
+    char *path = new char[filename.length() + 1];
+    wcstombs(path, filename.c_str(), filename.length() + 1);
+
+    FILE *file = fopen(path, "wb");
+
+    struct jpeg_compress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+    JSAMPROW row_pointer[1];
+    int row_stride;
+
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_compress(&cinfo);
+    jpeg_stdio_dest(&cinfo, file);
+
+    cinfo.image_width = this->width;
+    cinfo.image_height = this->height;
+    cinfo.input_components = 3;
+    cinfo.in_color_space = JCS_RGB;
+
+    jpeg_set_defaults(&cinfo);
+    jpeg_set_quality(&cinfo, 100, TRUE);
+    jpeg_start_compress(&cinfo, TRUE);
+    int bytes_per_pixel = 3;
+
+    while (cinfo.next_scanline < cinfo.image_height)
+    {
+        row_pointer[0] = (JSAMPROW) & this->data[cinfo.next_scanline * this->width * bytes_per_pixel];
+        jpeg_write_scanlines(&cinfo, row_pointer, 1);
+    }
+
+    jpeg_finish_compress(&cinfo);
+    jpeg_destroy_compress(&cinfo);
+
+    fclose(file);
+    delete[] path;
 }
 
 void Image::loadJPG(std::wstring filename)
 {
-    // TODO
-}
+    char *path = new char[filename.length() + 1];
+    wcstombs(path, filename.c_str(), filename.length() + 1);
 
-// Path: imageLib\image.h
+    FILE *file = fopen(path, "rb");
+
+    // jpeglib
+    struct jpeg_decompress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+    JSAMPROW row_pointer[1];
+    int row_stride;
+
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_decompress(&cinfo);
+    jpeg_stdio_src(&cinfo, file);
+
+    jpeg_read_header(&cinfo, TRUE);
+    jpeg_start_decompress(&cinfo);
+
+    this->width = cinfo.output_width;
+    this->height = cinfo.output_height;
+    delete[] this->data;
+    this->data = new int[this->width * this->height];
+
+    row_stride = this->width * 3;
+    while (cinfo.output_scanline < cinfo.output_height)
+    {
+        row_pointer[0] = (JSAMPROW) & this->data[cinfo.output_scanline * row_stride];
+        jpeg_read_scanlines(&cinfo, row_pointer, 1);
+    }
+
+    jpeg_finish_decompress(&cinfo);
+    jpeg_destroy_decompress(&cinfo);
+
+    fclose(file);
+    delete[] path;
+}
