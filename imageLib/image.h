@@ -2,6 +2,7 @@
 #define IMAGE_H
 
 #include <string>
+#include <vector>
 
 class Image
 {
@@ -31,6 +32,8 @@ public:
 
     void saveJPG(std::wstring filename) const;
     void loadJPG(std::wstring filename);
+
+    std::vector<bool> pHash() const;
 };
 
 #endif // IMAGE_H
