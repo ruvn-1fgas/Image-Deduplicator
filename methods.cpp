@@ -12,6 +12,7 @@ struct pair
 
 std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method);
 std::vector<pair> naiveMethod(std::vector<std::wstring> images);
+std::vector<pair> histogramMethod(std::vector<std::wstring> images);
 std::vector<pair> phashMethod(std::vector<std::wstring> images);
 bool compareNaive(Image img1, Image img2);
 Image getImage(std::wstring path);
@@ -69,7 +70,7 @@ std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method)
     }
     else if (method == 1)
     {
-        // isDuplicate = histogramMethod(images);
+        duplicates = histogramMethod(images);
     }
     else
         duplicates = phashMethod(images);
@@ -92,6 +93,16 @@ bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2, double thresh
     return count / (double)hash1.size() > threshold;
 }
 
+bool compareHash(std::vector<int> hist1, std::vector<int> hist2, double threshold)
+{
+    int count = 0;
+    for (int i = 0; i < hist1.size(); i++)
+        if (hist1[i] == hist2[i])
+            count++;
+
+    return count / (double)hist1.size() > threshold;
+}
+
 std::vector<pair> phashMethod(std::vector<std::wstring> images)
 {
     std::vector<pair> duplicates;
@@ -102,12 +113,36 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images)
     {
         Image img = getImage(image);
         hashes.push_back(img.pHash());
-        img.~Image();
     }
 
     for (int i = 0; i < hashes.size(); i++)
         for (int j = i + 1; j < hashes.size(); j++)
             if (compareHash(hashes[i], hashes[j], 0.8))
+            {
+                pair p;
+                p.first = images[i];
+                p.second = images[j];
+                duplicates.push_back(p);
+            }
+
+    return duplicates;
+}
+
+std::vector<pair> histogramMethod(std::vector<std::wstring> images)
+{
+    std::vector<pair> duplicates;
+
+    std::vector<std::vector<int>> histograms;
+
+    for (auto image : images)
+    {
+        Image img = getImage(image);
+        histograms.push_back(img.histogram());
+    }
+
+    for (int i = 0; i < histograms.size(); i++)
+        for (int j = i + 1; j < histograms.size(); j++)
+            if (compareHash(histograms[i], histograms[j], 0.8))
             {
                 pair p;
                 p.first = images[i];
@@ -137,11 +172,7 @@ std::vector<pair> naiveMethod(std::vector<std::wstring> images)
                 p.second = images[j];
                 duplicates.push_back(p);
             }
-
-            img2.~Image();
         }
-
-        img1.~Image();
     }
 
     return duplicates;
@@ -166,9 +197,6 @@ bool compareNaive(Image img1, Image img2)
                 count++;
         }
     }
-
-    img1.~Image();
-    img2.~Image();
 
     return count > 0.95 * img1.getWidth() * img1.getHeight();
 }
