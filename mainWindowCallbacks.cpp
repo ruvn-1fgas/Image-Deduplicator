@@ -3,6 +3,7 @@
 #include <gtk/gtkdialog.h>
 #include <locale>
 #include <iostream>
+#include <thread>
 #include <windows.h>
 #include "methods.cpp"
 
@@ -97,5 +98,6 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
         return;
     }
 
-    compareImages(window, directoryPath, method);
+    std::thread t(compareImages, window, directoryPath, method);
+    t.detach();
 }
