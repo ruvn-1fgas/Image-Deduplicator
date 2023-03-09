@@ -4,13 +4,12 @@
 #include <locale>
 #include <iostream>
 #include <windows.h>
-#include <vector>
 #include "methods.cpp"
-#include "imageLib/image.cpp"
 
 static void compareImages(GtkWindow *window, std::wstring directoryPath, int method);
 static void fileChoserOpenResponse(GtkDialog *dialog, int response)
 {
+
     if (response == GTK_RESPONSE_ACCEPT)
     {
         GFile *folder = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
@@ -31,7 +30,13 @@ static void fileChoserOpenResponse(GtkDialog *dialog, int response)
 
 static void openDirButton_clicked(GtkWidget *widget, gpointer data)
 {
-    GtkWidget *dialog = gtk_file_chooser_dialog_new("Выберите директорию", NULL, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, "_Отмена", GTK_RESPONSE_CANCEL, "_Выбрать", GTK_RESPONSE_ACCEPT, NULL);
+    GtkWindow *window = (GtkWindow *)g_object_get_data(G_OBJECT(widget), "window");
+
+    GtkWidget *dialog = gtk_file_chooser_dialog_new("Выберите директорию", window, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, "_Отмена", GTK_RESPONSE_CANCEL, "_Выбрать", GTK_RESPONSE_ACCEPT, NULL);
+    gtk_window_set_transient_for(GTK_WINDOW(dialog), window);
+    gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), TRUE);
+
     gtk_window_present(GTK_WINDOW(dialog));
 
     GtkWidget *dirLabel = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "dirLabel");
@@ -49,6 +54,10 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
     if (labelText.size() == 0)
     {
         GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Выберите директорию");
+        gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
+        gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
+        gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
+
         gtk_window_present(GTK_WINDOW(errorDialog));
         g_signal_connect(errorDialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
 
@@ -61,6 +70,10 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
     if (method == -1)
     {
         GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Выберите метод");
+        gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
+        gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
+        gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
+
         gtk_window_present(GTK_WINDOW(errorDialog));
         g_signal_connect(errorDialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
 
@@ -75,38 +88,14 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
     if (!std::filesystem::exists(directoryPath))
     {
         GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Директория не существует");
+        gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
+        gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
+        gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
+
         gtk_window_present(GTK_WINDOW(errorDialog));
         g_signal_connect(errorDialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
         return;
     }
 
-    int width = 8, height = 8;
-    Image *img = new Image(width, height);
-    for (int i = 0; i < width; i++)
-        for (int j = 0; j < height; j++)
-            img->setPixel(i, j, rand() % 256, rand() % 256, rand() % 256);
-
-    // save at current directory
-    img->saveJPG(directoryPath + L"\\test.jpg");
-
-    Image *img2 = new Image();
-    img2->loadJPG(directoryPath + L"\\test.jpg");
-
-    img2->saveJPG(directoryPath + L"\\test2.jpg");
-    // compareImages(window, directoryPath, method);
-}
-
-static void compareImages(GtkWindow *window, std::wstring directoryPath, int method)
-{
-}
-
-static void imgCountSlider_changed(GtkWidget *widget, gpointer label)
-{
-    int value = gtk_range_get_value(GTK_RANGE(widget));
-    if (label == g_object_get_data(G_OBJECT(widget), "imgCountLabel"))
-    {
-        char *text = g_strdup_printf("Количество изображений - %d", value);
-        gtk_label_set_text(GTK_LABEL(label), text);
-        g_free(text);
-    }
+    compareImages(window, directoryPath, method);
 }

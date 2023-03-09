@@ -21,6 +21,9 @@ public:
     int getWidth() const;
     int getHeight() const;
 
+    void resize(int w, int h);
+    void resize(int w);
+
     void setPixel(int x, int y, int r, int g, int b);
     void getPixel(int x, int y, int &r, int &g, int &b) const;
 

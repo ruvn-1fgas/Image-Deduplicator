@@ -21,7 +21,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     GtkWidget *methodsComboBox = gtk_combo_box_text_new();
 
-    std::vector<std::string> methods = {"Наивный алгоритм", "Алгоритм с использованием хеш-функции", "Алгоритм с использованием цветовых гистограмм"};
+    std::vector<std::string> methods = {"Наивный алгоритм", "Алгоритм с использованием цветовых гистограмм", "Алгоритм с использованием хеш-функции"};
     for (int i = 0; i < methods.size(); i++)
         gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(methodsComboBox), NULL, methods[i].c_str());
 
@@ -49,7 +49,8 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_grid_attach(GTK_GRID(mainGrid), startButton, 0, 6, 2, 1);
 
     // ======= OPEN DIR BUTTON EVENT =======
-
+    
+    g_object_set_data(G_OBJECT(window), "window", window);
     g_object_set_data(G_OBJECT(openDirButton), "dirLabel", dirLabel);
     g_signal_connect(openDirButton, "clicked", G_CALLBACK(openDirButton_clicked), NULL);
 

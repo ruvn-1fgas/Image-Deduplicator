@@ -312,35 +312,50 @@ void Image::loadJPG(std::wstring filename)
 
     FILE *file = fopen(path, "rb");
 
-    // jpeglib
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
-    JSAMPROW row_pointer[1];
-    int row_stride;
 
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_decompress(&cinfo);
+
     jpeg_stdio_src(&cinfo, file);
-
     jpeg_read_header(&cinfo, TRUE);
-    jpeg_start_decompress(&cinfo);
 
+    jpeg_start_decompress(&cinfo);
     this->width = cinfo.output_width;
     this->height = cinfo.output_height;
-    delete[] this->data;
-    this->data = new int[this->width * this->height];
+    int bytes_per_pixel = cinfo.output_components;
 
-    row_stride = this->width * 3;
+    delete[] this->data;
+    // create buffer
+    unsigned long int dwBufferBytes = this->width * this->height * 3;
+    unsigned char *lpData = (unsigned char *)malloc(sizeof(unsigned char) * dwBufferBytes);
+
+    unsigned char *lpRowBuffer[1];
+
     while (cinfo.output_scanline < cinfo.output_height)
     {
-        row_pointer[0] = (JSAMPROW) & this->data[cinfo.output_scanline * row_stride];
-        jpeg_read_scanlines(&cinfo, row_pointer, 1);
+        lpRowBuffer[0] = (unsigned char *)(&lpData[3 * this->width * cinfo.output_scanline]);
+        jpeg_read_scanlines(&cinfo, lpRowBuffer, 1);
     }
 
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
 
     fclose(file);
+
+    this->data = new int[this->width * this->height];
+    for (int y = 0; y < this->height; y++)
+    {
+        for (int x = 0; x < this->width; x++)
+        {
+            int r = lpData[(y * this->width + x) * 3 + 0];
+            int g = lpData[(y * this->width + x) * 3 + 1];
+            int b = lpData[(y * this->width + x) * 3 + 2];
+            this->setPixel(x, y, r, g, b);
+        }
+    }
+
     delete[] path;
 }
 
@@ -387,4 +402,45 @@ std::vector<bool> Image::pHash() const
 
     delete[] resized;
     return hash;
+}
+
+void Image::resize(int w, int h)
+{
+    int *resized = new int[w * h];
+    for (int i = 0; i < w * h; i++)
+        resized[i] = 0;
+
+    for (int y = 0; y < h; y++)
+    {
+        for (int x = 0; x < w; x++)
+        {
+            int x1 = x * this->width / w;
+            int y1 = y * this->height / h;
+            int x2 = (x + 1) * this->width / w;
+            int y2 = (y + 1) * this->height / h;
+            int sum = 0;
+            for (int y3 = y1; y3 < y2; y3++)
+            {
+                for (int x3 = x1; x3 < x2; x3++)
+                {
+                    int r, g, b;
+
+                    this->getPixel(x3, y3, r, g, b);
+                    sum += r + g + b;
+                }
+            }
+            resized[y * w + x] = sum / ((x2 - x1) * (y2 - y1));
+        }
+    }
+
+    delete[] this->data;
+    this->data = resized;
+    this->width = w;
+    this->height = h;
+}
+
+void Image::resize(int w)
+{
+    int h = this->height * w / this->width;
+    this->resize(w, h);
 }
