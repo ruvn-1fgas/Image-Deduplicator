@@ -444,3 +444,15 @@ void Image::resize(int w)
     int h = this->height * w / this->width;
     this->resize(w, h);
 }
+
+std::vector<int> Image::histogram() const
+{
+    std::vector<int> hist(256, 0);
+    for (int i = 0; i < this->width * this->height; i++)
+    {
+        int r, g, b;
+        this->getPixel(i % this->width, i / this->width, r, g, b);
+        hist[r]++;
+    }
+    return hist;
+}

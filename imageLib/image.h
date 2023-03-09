@@ -36,6 +36,7 @@ public:
     void saveJPG(std::wstring filename) const;
     void loadJPG(std::wstring filename);
 
+    std::vector<int> histogram() const;
     std::vector<bool> pHash() const;
 };
 
