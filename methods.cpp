@@ -10,13 +10,13 @@ struct pair
     std::wstring second;
 };
 
-void compareRoutine(GtkWindow *window, std::vector<std::wstring> images, int method);
+std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method);
 std::vector<pair> naiveMethod(std::vector<std::wstring> images);
 std::vector<pair> phashMethod(std::vector<std::wstring> images);
 bool compareNaive(Image img1, Image img2);
 Image getImage(std::wstring path);
 
-static void compareImages(GtkWindow *window, std::wstring directoryPath, int method)
+void compareImages(GtkWindow *window, std::wstring directoryPath, int method)
 {
     std::vector<std::wstring> images;
     for (const auto &entry : std::filesystem::directory_iterator(directoryPath))
@@ -26,7 +26,19 @@ static void compareImages(GtkWindow *window, std::wstring directoryPath, int met
             images.push_back(path);
     }
 
-    compareRoutine(window, images, method);
+    std::vector<pair> duplicates = compareRoutine(images, method);
+
+    std::cout << "Duplicates found: " << duplicates.size() << std::endl;
+
+    for (auto duplicate : duplicates)
+    {
+        std::string firstDublName = std::string(duplicate.first.begin(), duplicate.first.end());
+        firstDublName = firstDublName.substr(firstDublName.find_last_of("\\") + 1);
+        std::string secondDublName = std::string(duplicate.second.begin(), duplicate.second.end());
+        secondDublName = secondDublName.substr(secondDublName.find_last_of("\\") + 1);
+
+        std::cout << firstDublName << " and " << secondDublName << " are duplicates" << std::endl;
+    }
 }
 
 Image getImage(std::wstring path)
@@ -45,7 +57,7 @@ Image getImage(std::wstring path)
     return img;
 }
 
-void compareRoutine(GtkWindow *window, std::vector<std::wstring> images, int method)
+std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method)
 {
     std::vector<pair> duplicates;
 
@@ -67,17 +79,7 @@ void compareRoutine(GtkWindow *window, std::vector<std::wstring> images, int met
     std::cout << "Method was - " << method << std::endl;
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
-    std::cout << "Duplicates found: " << duplicates.size() << std::endl;
-
-    for (auto duplicate : duplicates)
-    {
-        std::string firstDublName = std::string(duplicate.first.begin(), duplicate.first.end());
-        firstDublName = firstDublName.substr(firstDublName.find_last_of("\\") + 1);
-        std::string secondDublName = std::string(duplicate.second.begin(), duplicate.second.end());
-        secondDublName = secondDublName.substr(secondDublName.find_last_of("\\") + 1);
-
-        std::cout << firstDublName << " and " << secondDublName << " are duplicates" << std::endl;
-    }
+    return duplicates;
 }
 
 bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2, double threshold)
@@ -100,6 +102,7 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images)
     {
         Image img = getImage(image);
         hashes.push_back(img.pHash());
+        img.~Image();
     }
 
     for (int i = 0; i < hashes.size(); i++)
@@ -134,7 +137,11 @@ std::vector<pair> naiveMethod(std::vector<std::wstring> images)
                 p.second = images[j];
                 duplicates.push_back(p);
             }
+
+            img2.~Image();
         }
+
+        img1.~Image();
     }
 
     return duplicates;
@@ -159,6 +166,9 @@ bool compareNaive(Image img1, Image img2)
                 count++;
         }
     }
+
+    img1.~Image();
+    img2.~Image();
 
     return count > 0.95 * img1.getWidth() * img1.getHeight();
 }

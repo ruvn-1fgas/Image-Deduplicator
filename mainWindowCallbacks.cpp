@@ -7,7 +7,6 @@
 #include <windows.h>
 #include "methods.cpp"
 
-static void compareImages(GtkWindow *window, std::wstring directoryPath, int method);
 static void fileChoserOpenResponse(GtkDialog *dialog, int response)
 {
 
