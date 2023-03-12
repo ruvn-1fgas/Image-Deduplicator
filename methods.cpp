@@ -10,12 +10,19 @@ struct pair
     std::wstring second;
 };
 
+struct pairVec
+{
+    std::wstring first;
+    std::vector<std::wstring> second;
+};
+
 std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method);
 std::vector<pair> naiveMethod(std::vector<std::wstring> images);
 std::vector<pair> histogramMethod(std::vector<std::wstring> images);
 std::vector<pair> phashMethod(std::vector<std::wstring> images);
 bool compareNaive(Image img1, Image img2);
 Image getImage(std::wstring path);
+void createNewWindow(GtkWindow *window, std::wstring directoryPath, std::vector<pairVec> duplicates);
 
 void compareImages(GtkWindow *window, std::wstring directoryPath, int method)
 {
@@ -40,6 +47,54 @@ void compareImages(GtkWindow *window, std::wstring directoryPath, int method)
 
         std::cout << firstDublName << " and " << secondDublName << " are duplicates" << std::endl;
     }
+
+    images.clear();
+
+    std::vector<pairVec> duplicatesNames;
+
+    for (auto duplicate : duplicates)
+    {
+        std::wstring firstDublName = duplicate.first;
+        firstDublName = firstDublName.substr(firstDublName.find_last_of(L"\\") + 1);
+
+        std::wstring secondDublName = duplicate.second;
+        secondDublName = secondDublName.substr(secondDublName.find_last_of(L"\\") + 1);
+
+        bool found = false;
+        for (auto &duplicateName : duplicatesNames)
+            if (duplicateName.first == firstDublName)
+            {
+                duplicateName.second.push_back(secondDublName);
+                found = true;
+                break;
+            }
+
+        if (!found)
+        {
+            pairVec p;
+            p.first = firstDublName;
+            p.second.push_back(secondDublName);
+            duplicatesNames.push_back(p);
+        }
+    }
+
+    for (auto duplicate : duplicatesNames)
+    {
+        std::string firstDublName = std::string(duplicate.first.begin(), duplicate.first.end());
+        std::cout << firstDublName << " and ";
+        for (auto second : duplicate.second)
+        {
+            std::string secondDublName = std::string(second.begin(), second.end());
+            std::cout << secondDublName << " ";
+        }
+        std::cout << "are duplicates" << std::endl;
+    }
+
+    createNewWindow(window, directoryPath, duplicatesNames);
+}
+
+void createNewWindow(GtkWindow *window, std::wstring directoryPath, std::vector<pairVec> duplicates)
+{
 }
 
 Image getImage(std::wstring path)
@@ -80,6 +135,8 @@ std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method)
     std::cout << "Method was - " << method << std::endl;
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
+    images.clear();
+
     return duplicates;
 }
 
@@ -106,6 +163,7 @@ bool compareHash(std::vector<int> hist1, std::vector<int> hist2, double threshol
 std::vector<pair> phashMethod(std::vector<std::wstring> images)
 {
     std::vector<pair> duplicates;
+    std::vector<bool> visited(images.size(), false);
 
     std::vector<std::vector<bool>> hashes;
 
@@ -116,14 +174,30 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images)
     }
 
     for (int i = 0; i < hashes.size(); i++)
+    {
+        if (visited[i])
+            continue;
         for (int j = i + 1; j < hashes.size(); j++)
+        {
+            if (visited[j])
+                continue;
             if (compareHash(hashes[i], hashes[j], 0.8))
             {
                 pair p;
                 p.first = images[i];
                 p.second = images[j];
                 duplicates.push_back(p);
+
+                visited[j] = true;
             }
+        }
+    }
+
+    for (auto hash : hashes)
+        hash.clear();
+
+    hashes.clear();
+    visited.clear();
 
     return duplicates;
 }
@@ -131,6 +205,7 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images)
 std::vector<pair> histogramMethod(std::vector<std::wstring> images)
 {
     std::vector<pair> duplicates;
+    std::vector<bool> visited(images.size(), false);
 
     std::vector<std::vector<int>> histograms;
 
@@ -141,14 +216,31 @@ std::vector<pair> histogramMethod(std::vector<std::wstring> images)
     }
 
     for (int i = 0; i < histograms.size(); i++)
+    {
+        if (visited[i])
+            continue;
+
         for (int j = i + 1; j < histograms.size(); j++)
+        {
+            if (visited[j])
+                continue;
             if (compareHash(histograms[i], histograms[j], 0.8))
             {
                 pair p;
                 p.first = images[i];
                 p.second = images[j];
                 duplicates.push_back(p);
+
+                visited[j] = true;
             }
+        }
+    }
+
+    for (auto hist : histograms)
+        hist.clear();
+
+    histograms.clear();
+    visited.clear();
 
     return duplicates;
 }
@@ -156,13 +248,18 @@ std::vector<pair> histogramMethod(std::vector<std::wstring> images)
 std::vector<pair> naiveMethod(std::vector<std::wstring> images)
 {
     std::vector<pair> duplicates;
+    std::vector<bool> visited(images.size(), false);
 
     for (int i = 0; i < images.size(); i++)
     {
+        if (visited[i])
+            continue;
         Image img1 = getImage(images[i]);
 
         for (int j = i + 1; j < images.size(); j++)
         {
+            if (visited[j])
+                continue;
             Image img2 = getImage(images[j]);
 
             if (compareNaive(img1, img2))
@@ -171,9 +268,13 @@ std::vector<pair> naiveMethod(std::vector<std::wstring> images)
                 p.first = images[i];
                 p.second = images[j];
                 duplicates.push_back(p);
+
+                visited[j] = true;
             }
         }
     }
+
+    visited.clear();
 
     return duplicates;
 }
