@@ -154,6 +154,10 @@ void Image::loadBMP(std::wstring filename)
     }
 
     file.close();
+
+    magic = {0};
+    header = {0};
+    dibInfo = {0};
 }
 
 void Image::savePNG(std::wstring filename) const
@@ -263,6 +267,9 @@ void Image::loadPNG(std::wstring filename)
         free(row_pointers[y]);
     free(row_pointers);
     delete[] path;
+
+    png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
 }
 
 void Image::saveJPG(std::wstring filename) const
@@ -357,6 +364,7 @@ void Image::loadJPG(std::wstring filename)
     }
 
     delete[] path;
+    free(lpData);
 }
 
 std::vector<bool> Image::pHash() const
