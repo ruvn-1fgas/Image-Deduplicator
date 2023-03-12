@@ -2,10 +2,14 @@
 
 static void activate(GtkApplication *app, gpointer user_data)
 {
-    GtkWidget *window;
-    GtkWidget *mainGrid = gtk_grid_new();
+    // ======= WINDOW SETUP =======
 
-    GtkWidget *openDirButton = gtk_button_new_with_label("Выбрать директорию");
+    GtkWidget *window = gtk_application_window_new(app);
+    gtk_window_set_title(GTK_WINDOW(window), "Image Deduplicator");
+
+    gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
+
+    GtkWidget *mainGrid = gtk_grid_new();
 
     // ======= LABEL SETUP =======
 
@@ -29,10 +33,8 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     GtkWidget *startButton = gtk_button_new_with_label("Начать");
 
-    window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(window), "Image Deduplicator");
-
     // ======= GRID SETUP (DIRECTORY) =======
+    GtkWidget *openDirButton = gtk_button_new_with_label("Выбрать директорию");
 
     // vertical gap
     gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 1, 2, 1);
@@ -49,7 +51,7 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_grid_attach(GTK_GRID(mainGrid), startButton, 0, 6, 2, 1);
 
     // ======= OPEN DIR BUTTON EVENT =======
-    
+
     g_object_set_data(G_OBJECT(window), "window", window);
     g_object_set_data(G_OBJECT(openDirButton), "dirLabel", dirLabel);
     g_signal_connect(openDirButton, "clicked", G_CALLBACK(openDirButton_clicked), NULL);
@@ -58,8 +60,11 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     g_object_set_data(G_OBJECT(startButton), "methodsComboBox", methodsComboBox);
     g_object_set_data(G_OBJECT(startButton), "dirLabel", dirLabel);
-    g_object_set_data(G_OBJECT(window), "window", window);
-    g_signal_connect(startButton, "clicked", G_CALLBACK(startButton_clicked), NULL);
+    g_object_set_data(G_OBJECT(startButton), "window", window);
+
+    g_signal_connect(startButton, "clicked", G_CALLBACK(startButton_clicked), mainGrid);
+
+    // ======= WINDOW SHOW =======
 
     gtk_window_set_child(GTK_WINDOW(window), mainGrid);
 

@@ -16,15 +16,14 @@ struct pairVec
     std::vector<std::wstring> second;
 };
 
-std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method);
-std::vector<pair> naiveMethod(std::vector<std::wstring> images);
-std::vector<pair> histogramMethod(std::vector<std::wstring> images);
-std::vector<pair> phashMethod(std::vector<std::wstring> images);
+std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method, GtkWidget *progressBar);
+std::vector<pair> naiveMethod(std::vector<std::wstring> images, GtkWidget *progressBar);
+std::vector<pair> histogramMethod(std::vector<std::wstring> images, GtkWidget *progressBar);
+std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progressBar);
 bool compareNaive(Image img1, Image img2);
 Image getImage(std::wstring path);
-void createNewWindow(GtkWindow *window, std::wstring directoryPath, std::vector<pairVec> duplicates);
 
-void compareImages(GtkWindow *window, std::wstring directoryPath, int method)
+std::vector<pairVec> compareImages(std::wstring directoryPath, int method, GtkWidget *progressBar)
 {
     std::vector<std::wstring> images;
     for (const auto &entry : std::filesystem::directory_iterator(directoryPath))
@@ -34,24 +33,10 @@ void compareImages(GtkWindow *window, std::wstring directoryPath, int method)
             images.push_back(path);
     }
 
-    std::vector<pair> duplicates = compareRoutine(images, method);
-
-    std::cout << "Duplicates found: " << duplicates.size() << std::endl;
-
-    for (auto duplicate : duplicates)
-    {
-        std::string firstDublName = std::string(duplicate.first.begin(), duplicate.first.end());
-        firstDublName = firstDublName.substr(firstDublName.find_last_of("\\") + 1);
-        std::string secondDublName = std::string(duplicate.second.begin(), duplicate.second.end());
-        secondDublName = secondDublName.substr(secondDublName.find_last_of("\\") + 1);
-
-        std::cout << firstDublName << " and " << secondDublName << " are duplicates" << std::endl;
-    }
-
+    std::vector<pair> duplicates = compareRoutine(images, method, progressBar);
     images.clear();
 
     std::vector<pairVec> duplicatesNames;
-
     for (auto duplicate : duplicates)
     {
         std::wstring firstDublName = duplicate.first;
@@ -77,24 +62,7 @@ void compareImages(GtkWindow *window, std::wstring directoryPath, int method)
             duplicatesNames.push_back(p);
         }
     }
-
-    for (auto duplicate : duplicatesNames)
-    {
-        std::string firstDublName = std::string(duplicate.first.begin(), duplicate.first.end());
-        std::cout << firstDublName << " and ";
-        for (auto second : duplicate.second)
-        {
-            std::string secondDublName = std::string(second.begin(), second.end());
-            std::cout << secondDublName << " ";
-        }
-        std::cout << "are duplicates" << std::endl;
-    }
-
-    createNewWindow(window, directoryPath, duplicatesNames);
-}
-
-void createNewWindow(GtkWindow *window, std::wstring directoryPath, std::vector<pairVec> duplicates)
-{
+    return duplicatesNames;
 }
 
 Image getImage(std::wstring path)
@@ -113,22 +81,18 @@ Image getImage(std::wstring path)
     return img;
 }
 
-std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method)
+std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method, GtkWidget *progressBar)
 {
     std::vector<pair> duplicates;
 
     auto start = std::chrono::high_resolution_clock::now();
 
     if (method == 0)
-    {
-        duplicates = naiveMethod(images);
-    }
+        duplicates = naiveMethod(images, progressBar);
     else if (method == 1)
-    {
-        duplicates = histogramMethod(images);
-    }
+        duplicates = histogramMethod(images, progressBar);
     else
-        duplicates = phashMethod(images);
+        duplicates = phashMethod(images, progressBar);
 
     auto end = std::chrono::high_resolution_clock::now();
 
@@ -136,7 +100,6 @@ std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method)
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
     images.clear();
-
     return duplicates;
 }
 
@@ -160,10 +123,12 @@ bool compareHash(std::vector<int> hist1, std::vector<int> hist2, double threshol
     return count / (double)hist1.size() > threshold;
 }
 
-std::vector<pair> phashMethod(std::vector<std::wstring> images)
+std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progressBar)
 {
     std::vector<pair> duplicates;
     std::vector<bool> visited(images.size(), false);
+
+    int count = images.size();
 
     std::vector<std::vector<bool>> hashes;
 
@@ -190,7 +155,15 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images)
 
                 visited[j] = true;
             }
+            while (g_main_context_pending(NULL))
+                g_main_context_iteration(NULL, FALSE);
         }
+
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
+        char *text = g_strdup_printf("%d%%", (int)(i / (double)count * 100));
+        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
+        while (g_main_context_pending(NULL))
+            g_main_context_iteration(NULL, FALSE);
     }
 
     for (auto hash : hashes)
@@ -202,10 +175,12 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images)
     return duplicates;
 }
 
-std::vector<pair> histogramMethod(std::vector<std::wstring> images)
+std::vector<pair> histogramMethod(std::vector<std::wstring> images, GtkWidget *progressBar)
 {
     std::vector<pair> duplicates;
     std::vector<bool> visited(images.size(), false);
+
+    int count = images.size();
 
     std::vector<std::vector<int>> histograms;
 
@@ -233,7 +208,15 @@ std::vector<pair> histogramMethod(std::vector<std::wstring> images)
 
                 visited[j] = true;
             }
+            while (g_main_context_pending(NULL))
+                g_main_context_iteration(NULL, FALSE);
         }
+
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
+        char *text = g_strdup_printf("%d%%", (int)(i / (double)count * 100));
+        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
+        while (g_main_context_pending(NULL))
+            g_main_context_iteration(NULL, FALSE);
     }
 
     for (auto hist : histograms)
@@ -245,10 +228,12 @@ std::vector<pair> histogramMethod(std::vector<std::wstring> images)
     return duplicates;
 }
 
-std::vector<pair> naiveMethod(std::vector<std::wstring> images)
+std::vector<pair> naiveMethod(std::vector<std::wstring> images, GtkWidget *progressBar)
 {
     std::vector<pair> duplicates;
     std::vector<bool> visited(images.size(), false);
+
+    int count = images.size();
 
     for (int i = 0; i < images.size(); i++)
     {
@@ -271,7 +256,15 @@ std::vector<pair> naiveMethod(std::vector<std::wstring> images)
 
                 visited[j] = true;
             }
+            while (g_main_context_pending(NULL))
+                g_main_context_iteration(NULL, FALSE);
         }
+
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
+        char *text = g_strdup_printf("%d%%", (int)(i / (double)count * 100));
+        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
+        while (g_main_context_pending(NULL))
+            g_main_context_iteration(NULL, FALSE);
     }
 
     visited.clear();
