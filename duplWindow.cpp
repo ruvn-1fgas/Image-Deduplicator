@@ -7,7 +7,6 @@ private:
     std::wstring directoryPath;
     std::vector<pairVec> duplicates;
     int index = 0;
-    ListBox *listBox;
 
 public:
     DuplWindow(GtkWindow *parent, std::wstring directoryPath, std::vector<pairVec> duplicates)
@@ -27,6 +26,8 @@ public:
         GtkWidget *newWindow;
         newWindow = gtk_window_new();
 
+        global::window = newWindow;
+
         gtk_window_set_resizable(GTK_WINDOW(newWindow), FALSE);
 
         gtk_window_set_title(GTK_WINDOW(newWindow), "Duplicates");
@@ -41,9 +42,8 @@ public:
 
         // ======= LIST BOX SETUP =======
 
-        std::string labelText = UTF16toUTF8(this->duplicates[0].first);
-        this->listBox = new ListBox(labelText, this->duplicates[0]);
-        this->listBox->createListBox();
+        global::listBoxClass = new ListBox(this->duplicates[0]);
+        global::listBoxClass->createListBox();
 
         // ======= BUTTONS SETUP =======
 
@@ -56,15 +56,12 @@ public:
 
             std::vector<pairVec> *pointerDuplicates = new std::vector<pairVec>(this->duplicates);
 
-            g_object_set_data(G_OBJECT(previousButton), "listBox", this->listBox);
-
             g_signal_connect(previousButton, "clicked", G_CALLBACK(onPreviousButtonClicked), this);
             gtk_grid_attach(GTK_GRID(grid), previousButton, 0, 4, 1, 1);
             gtk_grid_attach(GTK_GRID(grid), gtk_label_new("      "), 1, 4, 1, 1);
 
             GtkWidget *nextButton = gtk_button_new_with_label("Вперед");
 
-            g_object_set_data(G_OBJECT(nextButton), "listBox", this->listBox);
             g_signal_connect(nextButton, "clicked", G_CALLBACK(onNextButtonClicked), this);
             gtk_grid_attach(GTK_GRID(grid), nextButton, 2, 4, 1, 1);
         }

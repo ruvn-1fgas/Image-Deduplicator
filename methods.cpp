@@ -3,6 +3,9 @@
 #include "imageLib/image.cpp"
 #include <chrono>
 #include <iostream>
+#include <thread>
+#include <atomic>
+#include <mutex>
 
 struct pair
 {
@@ -130,12 +133,17 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
 
     int count = images.size();
 
-    std::vector<std::vector<bool>> hashes;
+    std::vector<std::vector<bool>> hashes(images.size());
 
-    for (auto image : images)
+    for (int i = 0; i < images.size(); i++)
     {
-        Image img = getImage(image);
-        hashes.push_back(img.pHash());
+        Image img = getImage(images[i]);
+        hashes[i] = img.pHash();
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
+        char *text = g_strdup_printf("Вычисление хеша - %d/%d", i + 1, count);
+        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
+        while (g_main_context_pending(NULL))
+            g_main_context_iteration(NULL, FALSE);
     }
 
     for (int i = 0; i < hashes.size(); i++)
@@ -160,7 +168,7 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
         }
 
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
-        char *text = g_strdup_printf("%d%%", (int)(i / (double)count * 100));
+        char *text = g_strdup_printf("Сравнение изображений - %d%%", (int)(i / (double)count * 100));
         gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
         while (g_main_context_pending(NULL))
             g_main_context_iteration(NULL, FALSE);
