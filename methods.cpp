@@ -1,11 +1,8 @@
 #include <gtk/gtk.h>
 #include <filesystem>
 #include "imageLib/image.cpp"
-#include <chrono>
-#include <iostream>
+#include "structures/settings.cpp"
 #include <thread>
-#include <atomic>
-#include <mutex>
 
 struct pair
 {
@@ -71,14 +68,14 @@ Image getImage(std::wstring path)
     return img;
 }
 
-bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2, double threshold)
+bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2)
 {
     int count = 0;
     for (int i = 0; i < hash1.size(); i++)
         if (hash1[i] == hash2[i])
             count++;
 
-    return count / (double)hash1.size() > threshold;
+    return count / (double)hash1.size() > settings::threshold / 100.0;
 }
 
 std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progressBar)
@@ -109,7 +106,7 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
         {
             if (visited[j])
                 continue;
-            if (compareHash(hashes[i], hashes[j], 0.8))
+            if (compareHash(hashes[i], hashes[j]))
             {
                 pair p;
                 p.first = images[i];

@@ -1,9 +1,3 @@
-#include <filesystem>
-#include <gtk/gtk.h>
-#include <gtk/gtkdialog.h>
-#include <iostream>
-#include <memory>
-#include <windows.h>
 #include "duplWindow.cpp"
 
 void createNewWindow(GtkWindow *window, std::wstring directoryPath, std::vector<std::vector<std::wstring>> duplicates);

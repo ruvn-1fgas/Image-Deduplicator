@@ -2,13 +2,12 @@
 #include <vector>
 #include <fstream>
 #include <filesystem>
-#include <iostream>
 
 namespace settings
 {
     bool recursive;
     std::vector<std::wstring> exclude;
-    int hashTreshold;
+    int threshold;
     int appTheme;
 
     void loadSettings()
@@ -16,7 +15,7 @@ namespace settings
         if (!std::filesystem::exists("settings.ini"))
         {
             std::ofstream file("settings.ini");
-            file << "[settings]\nRecursive = false\nHash treshold = 80\nApp theme = default\n";
+            file << "[settings]\nRecursive = false\nHash threshold = 80\nApp theme = default\n";
             file.close();
         }
 
@@ -33,10 +32,10 @@ namespace settings
                 std::string value = line.substr(line.find('=') + 2);
                 recursive = value == "true" ? true : false;
             }
-            else if (line.find("Hash treshold") != std::string::npos)
+            else if (line.find("Hash threshold") != std::string::npos)
             {
                 std::string value = line.substr(line.find('=') + 2);
-                hashTreshold = std::stoi(value);
+                threshold = std::stoi(value);
             }
             else if (line.find("App theme") != std::string::npos)
             {

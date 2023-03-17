@@ -1,13 +1,7 @@
 #include <filesystem>
-#include <gtk/gtk.h>
-#include <gtk/gtkdialog.h>
-#include <vector>
-#include <windows.h>
-#include <iostream>
-#include <shlwapi.h>
 #include "methods.cpp"
-#include "Structures/ListBox.h"
-#include <thread>
+#include "structures/ListBox.h"
+#include "structures/settings.cpp"
 
 namespace global
 {
