@@ -13,10 +13,7 @@ struct pair
     std::wstring second;
 };
 
-std::vector<pair> naiveMethod(std::vector<std::wstring> images, GtkWidget *progressBar);
-std::vector<pair> histogramMethod(std::vector<std::wstring> images, GtkWidget *progressBar);
 std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progressBar);
-bool compareNaive(Image img1, Image img2);
 Image getImage(std::wstring path);
 
 std::vector<std::vector<std::wstring>> compareImages(std::wstring directoryPath, GtkWidget *progressBar)
@@ -84,16 +81,6 @@ bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2, double thresh
     return count / (double)hash1.size() > threshold;
 }
 
-bool compareHash(std::vector<int> hist1, std::vector<int> hist2, double threshold)
-{
-    int count = 0;
-    for (int i = 0; i < hist1.size(); i++)
-        if (hist1[i] == hist2[i])
-            count++;
-
-    return count / (double)hist1.size() > threshold;
-}
-
 std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progressBar)
 {
     std::vector<pair> duplicates;
@@ -149,124 +136,4 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
     visited.clear();
 
     return duplicates;
-}
-
-std::vector<pair> histogramMethod(std::vector<std::wstring> images, GtkWidget *progressBar)
-{
-    std::vector<pair> duplicates;
-    std::vector<bool> visited(images.size(), false);
-
-    int count = images.size();
-
-    std::vector<std::vector<int>> histograms;
-
-    for (auto image : images)
-    {
-        Image img = getImage(image);
-        histograms.push_back(img.histogram());
-    }
-
-    for (int i = 0; i < histograms.size(); i++)
-    {
-        if (visited[i])
-            continue;
-
-        for (int j = i + 1; j < histograms.size(); j++)
-        {
-            if (visited[j])
-                continue;
-            if (compareHash(histograms[i], histograms[j], 0.8))
-            {
-                pair p;
-                p.first = images[i];
-                p.second = images[j];
-                duplicates.push_back(p);
-
-                visited[j] = true;
-            }
-            while (g_main_context_pending(NULL))
-                g_main_context_iteration(NULL, FALSE);
-        }
-
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
-        char *text = g_strdup_printf("%d%%", (int)(i / (double)count * 100));
-        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
-        while (g_main_context_pending(NULL))
-            g_main_context_iteration(NULL, FALSE);
-    }
-
-    for (auto hist : histograms)
-        hist.clear();
-
-    histograms.clear();
-    visited.clear();
-
-    return duplicates;
-}
-
-std::vector<pair> naiveMethod(std::vector<std::wstring> images, GtkWidget *progressBar)
-{
-    std::vector<pair> duplicates;
-    std::vector<bool> visited(images.size(), false);
-
-    int count = images.size();
-
-    for (int i = 0; i < images.size(); i++)
-    {
-        if (visited[i])
-            continue;
-        Image img1 = getImage(images[i]);
-
-        for (int j = i + 1; j < images.size(); j++)
-        {
-            if (visited[j])
-                continue;
-            Image img2 = getImage(images[j]);
-
-            if (compareNaive(img1, img2))
-            {
-                pair p;
-                p.first = images[i];
-                p.second = images[j];
-                duplicates.push_back(p);
-
-                visited[j] = true;
-            }
-            while (g_main_context_pending(NULL))
-                g_main_context_iteration(NULL, FALSE);
-        }
-
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
-        char *text = g_strdup_printf("%d%%", (int)(i / (double)count * 100));
-        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
-        while (g_main_context_pending(NULL))
-            g_main_context_iteration(NULL, FALSE);
-    }
-
-    visited.clear();
-
-    return duplicates;
-}
-
-bool compareNaive(Image img1, Image img2)
-{
-    if (img1.getWidth() != img2.getWidth() || img1.getHeight() != img2.getHeight())
-        return false;
-
-    int count = 0;
-
-    for (int y = 0; y < img1.getHeight(); y++)
-    {
-        for (int x = 0; x < img1.getWidth(); x++)
-        {
-            int r1, g1, b1, r2, g2, b2;
-            img1.getPixel(x, y, r1, g1, b1);
-            img2.getPixel(x, y, r2, g2, b2);
-
-            if (r1 == r2 && g1 == g2 && b1 == b2)
-                count++;
-        }
-    }
-
-    return count > 0.95 * img1.getWidth() * img1.getHeight();
 }
