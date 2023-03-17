@@ -44,9 +44,5 @@ namespace settings
                 appTheme = value == "default" ? 0 : 1;
             }
         }
-
-        std::cout << "Recursive: " << recursive << std::endl;
-        std::cout << "Hash treshold: " << hashTreshold << std::endl;
-        std::cout << "App theme: " << appTheme << std::endl;
     }
 }
