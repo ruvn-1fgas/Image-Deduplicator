@@ -22,17 +22,11 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_widget_set_hexpand(dirLabel, TRUE);
     gtk_widget_set_halign(dirLabel, GTK_ALIGN_FILL);
 
-    // ======= COMBO BOX SETUP =======
-
-    GtkWidget *methodsComboBox = gtk_combo_box_text_new();
-
-    std::vector<std::string> methods = {"Наивный алгоритм", "Алгоритм с использованием цветовых гистограмм", "Алгоритм с использованием хеш-функции"};
-    for (int i = 0; i < methods.size(); i++)
-        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(methodsComboBox), NULL, methods[i].c_str());
-
     // ======= START BUTTON SETUP =======
 
     GtkWidget *startButton = gtk_button_new_with_label("Начать");
+    // set size of start button to 240x60
+    gtk_widget_set_size_request(startButton, 240, 30);
 
     // ======= GRID SETUP (DIRECTORY) =======
     GtkWidget *openDirButton = gtk_button_new_with_label("Выбрать директорию");
@@ -47,8 +41,6 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     // vertical gap
     gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 4, 2, 1);
-
-    gtk_grid_attach(GTK_GRID(mainGrid), methodsComboBox, 0, 5, 2, 1);
     gtk_grid_attach(GTK_GRID(mainGrid), startButton, 0, 6, 2, 1);
 
     // ======= OPEN DIR BUTTON EVENT =======
@@ -59,7 +51,6 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     // ======= START BUTTON EVENT =======
 
-    g_object_set_data(G_OBJECT(startButton), "methodsComboBox", methodsComboBox);
     g_object_set_data(G_OBJECT(startButton), "dirLabel", dirLabel);
     g_object_set_data(G_OBJECT(startButton), "window", window);
 
@@ -72,6 +63,6 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_widget_set_halign(mainGrid, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(mainGrid, GTK_ALIGN_CENTER);
 
-    gtk_window_set_default_size(GTK_WINDOW(window), 480, 640);
+    gtk_window_set_default_size(GTK_WINDOW(window), 480, 240);
     gtk_widget_show(window);
 }

@@ -1,16 +1,17 @@
+#include <vector>
+#include <string>
+
 class ListBox
 {
 private:
     GtkWidget *listBox;
     GtkWidget *label;
     GtkGesture *rightClick;
-    std::string labelText;
-    std::vector<std::wstring> items;
     void setLabelText(int index);
 
 public:
-    ListBox(pairVec items);
+    ListBox(std::vector<std::wstring> items);
     void addStrings();
     void createListBox();
-    void setItems(pairVec items);
+    void setItems(std::vector<std::wstring> items);
 };

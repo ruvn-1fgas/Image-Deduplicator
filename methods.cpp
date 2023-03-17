@@ -13,20 +13,13 @@ struct pair
     std::wstring second;
 };
 
-struct pairVec
-{
-    std::wstring first;
-    std::vector<std::wstring> second;
-};
-
-std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method, GtkWidget *progressBar);
 std::vector<pair> naiveMethod(std::vector<std::wstring> images, GtkWidget *progressBar);
 std::vector<pair> histogramMethod(std::vector<std::wstring> images, GtkWidget *progressBar);
 std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progressBar);
 bool compareNaive(Image img1, Image img2);
 Image getImage(std::wstring path);
 
-std::vector<pairVec> compareImages(std::wstring directoryPath, int method, GtkWidget *progressBar)
+std::vector<std::vector<std::wstring>> compareImages(std::wstring directoryPath, GtkWidget *progressBar)
 {
     std::vector<std::wstring> images;
     for (const auto &entry : std::filesystem::directory_iterator(directoryPath))
@@ -36,36 +29,33 @@ std::vector<pairVec> compareImages(std::wstring directoryPath, int method, GtkWi
             images.push_back(path);
     }
 
-    std::vector<pair> duplicates = compareRoutine(images, method, progressBar);
+    std::vector<pair> duplicates = phashMethod(images, progressBar);
     images.clear();
 
-    std::vector<pairVec> duplicatesNames;
-    for (auto duplicate : duplicates)
+    std::vector<std::vector<std::wstring>> listOfDuplicates;
+
+    for (int i = 0; i < duplicates.size(); i++)
     {
-        std::wstring firstDublName = duplicate.first;
-        firstDublName = firstDublName.substr(firstDublName.find_last_of(L"\\") + 1);
-
-        std::wstring secondDublName = duplicate.second;
-        secondDublName = secondDublName.substr(secondDublName.find_last_of(L"\\") + 1);
-
         bool found = false;
-        for (auto &duplicateName : duplicatesNames)
-            if (duplicateName.first == firstDublName)
+        for (int j = 0; j < listOfDuplicates.size(); j++)
+        {
+            if (listOfDuplicates[j][0] == duplicates[i].first)
             {
-                duplicateName.second.push_back(secondDublName);
+                listOfDuplicates[j].push_back(duplicates[i].second);
                 found = true;
                 break;
             }
+        }
 
         if (!found)
         {
-            pairVec p;
-            p.first = firstDublName;
-            p.second.push_back(secondDublName);
-            duplicatesNames.push_back(p);
+            std::vector<std::wstring> list;
+            list.push_back(duplicates[i].first);
+            list.push_back(duplicates[i].second);
+            listOfDuplicates.push_back(list);
         }
     }
-    return duplicatesNames;
+    return listOfDuplicates;
 }
 
 Image getImage(std::wstring path)
@@ -82,28 +72,6 @@ Image getImage(std::wstring path)
         img.loadPNG(path);
 
     return img;
-}
-
-std::vector<pair> compareRoutine(std::vector<std::wstring> images, int method, GtkWidget *progressBar)
-{
-    std::vector<pair> duplicates;
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    if (method == 0)
-        duplicates = naiveMethod(images, progressBar);
-    else if (method == 1)
-        duplicates = histogramMethod(images, progressBar);
-    else
-        duplicates = phashMethod(images, progressBar);
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    std::cout << "Method was - " << method << std::endl;
-    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-    images.clear();
-    return duplicates;
 }
 
 bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2, double threshold)

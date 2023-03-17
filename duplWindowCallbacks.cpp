@@ -12,11 +12,11 @@
 namespace global
 {
     int index;
-    std::wstring dirPath;
-    std::vector<pairVec> duplicates;
+    std::vector<std::vector<std::wstring>> duplicates;
     GtkWidget *window;
     GtkWidget *grid;
     ListBox *listBoxClass;
+    std::vector<std::wstring> currentItems;
 };
 
 std::string UTF16toUTF8(std::wstring wString)
@@ -29,11 +29,9 @@ std::string UTF16toUTF8(std::wstring wString)
 
 void onRowActivated(GtkListBox *listBox, GtkListBoxRow *row, gpointer data)
 {
-    std::vector<std::wstring> *items = (std::vector<std::wstring> *)g_object_get_data(G_OBJECT(listBox), "items");
     int index = gtk_list_box_row_get_index(row);
-    std::wstring fullPath = global::dirPath + L"\\" + items->at(index);
 
-    if (!std::filesystem::exists(fullPath))
+    if (!std::filesystem::exists(global::currentItems.at(index)))
     {
         GtkWidget *errorDialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Изображение не найдено");
         gtk_window_set_transient_for(GTK_WINDOW(errorDialog), NULL);
@@ -43,22 +41,20 @@ void onRowActivated(GtkListBox *listBox, GtkListBoxRow *row, gpointer data)
         gtk_window_present(GTK_WINDOW(errorDialog));
         g_signal_connect(errorDialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
 
-        items->erase(items->begin() + index);
+        global::currentItems.erase(global::currentItems.begin() + index);
         gtk_list_box_remove(listBox, GTK_WIDGET(row));
 
         return;
     }
 
-    ShellExecuteW(NULL, L"open", fullPath.c_str(), NULL, NULL, SW_SHOWNORMAL);
+    ShellExecuteW(NULL, L"open", global::currentItems.at(index).c_str(), NULL, NULL, SW_SHOWNORMAL);
 }
 
 void onRowMouseEnter(GtkWidget *label, gint x, gint y, gboolean keyboard_mode, GtkTooltip *tooltip, gpointer data)
 {
-    std::vector<std::wstring> *items = (std::vector<std::wstring> *)g_object_get_data(G_OBJECT(label), "items");
     int index = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(label), "index"));
-    std::wstring fullPath = global::dirPath + L"\\" + items->at(index);
 
-    if (!std::filesystem::exists(fullPath))
+    if (!std::filesystem::exists(global::currentItems.at(index)))
     {
         GtkListBox *listBox = GTK_LIST_BOX(g_object_get_data(G_OBJECT(label), "listBox"));
         gtk_list_box_remove(listBox, GTK_WIDGET(gtk_widget_get_parent(label)));
@@ -66,7 +62,7 @@ void onRowMouseEnter(GtkWidget *label, gint x, gint y, gboolean keyboard_mode, G
 
     GtkWidget *tooltipWidget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_widget_set_size_request(tooltipWidget, 64, 64);
-    GtkImage *image = GTK_IMAGE(gtk_image_new_from_file(UTF16toUTF8(fullPath).c_str()));
+    GtkImage *image = GTK_IMAGE(gtk_image_new_from_file(UTF16toUTF8(global::currentItems.at(index)).c_str()));
 
     GtkAllocation allocation;
     gtk_widget_get_allocation(GTK_WIDGET(image), &allocation);
@@ -86,15 +82,13 @@ void popupMenuClosed(GtkWidget *menu, gpointer data)
 
 static void openAllFiles(GSimpleAction *action, GVariant *parameter, gpointer data)
 {
-    std::vector<std::wstring> *items = (std::vector<std::wstring> *)g_object_get_data(G_OBJECT(data), "items");
     GList *selectedRows = (GList *)g_object_get_data(G_OBJECT(data), "selected");
 
     for (GList *i = selectedRows; i != NULL; i = i->next)
     {
         GtkListBoxRow *row = (GtkListBoxRow *)i->data;
         int index = gtk_list_box_row_get_index(row);
-        std::wstring fullPath = global::dirPath + L"\\" + items->at(index);
-        ShellExecuteW(NULL, L"open", fullPath.c_str(), NULL, NULL, SW_SHOWNORMAL);
+        ShellExecuteW(NULL, L"open", global::currentItems.at(index).c_str(), NULL, NULL, SW_SHOWNORMAL);
     }
 }
 
@@ -118,7 +112,6 @@ static void deleteFile(std::wstring filePath)
 
 static void deleteAllFiles(GSimpleAction *action, GVariant *parameter, gpointer data)
 {
-    std::vector<std::wstring> *items = (std::vector<std::wstring> *)g_object_get_data(G_OBJECT(data), "items");
     GtkListBox *listBox = (GtkListBox *)g_object_get_data(G_OBJECT(data), "listBox");
     GList *selectedRows = (GList *)g_object_get_data(G_OBJECT(data), "selected");
 
@@ -132,13 +125,10 @@ static void deleteAllFiles(GSimpleAction *action, GVariant *parameter, gpointer 
     }
 
     for (auto index : indexes)
-    {
-        std::wstring fullPath = global::dirPath + L"\\" + items->at(index);
-        deleteFile(fullPath);
-    }
+        deleteFile(global::currentItems.at(index));
 
     for (int i = 0; i < indexes.size(); i++)
-        items->erase(items->begin() + indexes[i] - i);
+        global::currentItems.erase(global::currentItems.begin() + indexes[i] - i);
 
     for (GList *i = selectedRows; i != NULL; i = i->next)
     {
@@ -146,7 +136,7 @@ static void deleteAllFiles(GSimpleAction *action, GVariant *parameter, gpointer 
         gtk_list_box_remove(listBox, GTK_WIDGET(row));
     }
 
-    if (items->size() == 0)
+    if (global::currentItems.size() == 0)
     {
         if (global::duplicates.size() == 1)
         {
@@ -168,17 +158,13 @@ void onRightClick(GtkGesture *gesture, gint n_press, gdouble x, gdouble y, gpoin
     if (selectedRows == NULL)
         return;
 
-    std::vector<std::wstring> *items = (std::vector<std::wstring> *)g_object_get_data(G_OBJECT(listBox), "items");
-
     GtkWidget *menu;
     GtkWidget *grid = gtk_grid_new();
     GtkWidget *openAll = gtk_button_new_with_label("Открыть");
     GtkWidget *deleteAll = gtk_button_new_with_label("Удалить");
 
-    g_object_set_data(G_OBJECT(openAll), "items", items);
     g_object_set_data(G_OBJECT(openAll), "selected", selectedRows);
 
-    g_object_set_data(G_OBJECT(deleteAll), "items", items);
     g_object_set_data(G_OBJECT(deleteAll), "listBox", listBox);
     g_object_set_data(G_OBJECT(deleteAll), "selected", selectedRows);
 
@@ -201,30 +187,27 @@ void onRightClick(GtkGesture *gesture, gint n_press, gdouble x, gdouble y, gpoin
 
 void ListBox::setLabelText(int index)
 {
-    this->labelText = "Список " + std::to_string(index);
+    std::string labelText = "Список " + std::to_string(index);
 
-    gtk_label_set_text(GTK_LABEL(label), this->labelText.c_str());
+    gtk_label_set_text(GTK_LABEL(label), labelText.c_str());
 }
 
-ListBox::ListBox(pairVec items)
+ListBox::ListBox(std::vector<std::wstring> items)
 {
-    this->items.push_back(items.first);
-    for (auto item : items.second)
-        this->items.push_back(item);
+    global::currentItems = items;
 }
 
 void ListBox::addStrings()
 {
     int localIndex = 0;
-    std::vector<std::wstring> *pointerItems = new std::vector<std::wstring>(this->items);
 
-    for (auto string : this->items)
+    for (auto string : global::currentItems)
     {
-        GtkWidget *labelInList = gtk_label_new(UTF16toUTF8(string).c_str());
+        std::wstring fileName = string.substr(string.find_last_of(L"\\") + 1);
+        GtkWidget *labelInList = gtk_label_new(UTF16toUTF8(fileName).c_str());
         gtk_widget_set_has_tooltip(labelInList, TRUE);
 
         g_object_set_data(G_OBJECT(labelInList), "listBox", this->listBox);
-        g_object_set_data(G_OBJECT(labelInList), "items", pointerItems);
         g_object_set_data(G_OBJECT(labelInList), "index", GINT_TO_POINTER(localIndex));
         g_signal_connect(labelInList, "query-tooltip", G_CALLBACK(onRowMouseEnter), NULL);
 
@@ -237,7 +220,7 @@ void ListBox::addStrings()
         localIndex++;
     }
 
-    if (this->items.size() >= 14)
+    if (global::currentItems.size() >= 14)
     {
         GtkWidget *scroll = gtk_scrolled_window_new();
         gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -260,8 +243,6 @@ void ListBox::createListBox()
     gtk_widget_set_size_request(this->listBox, 250, -1);
 
     gtk_list_box_set_selection_mode(GTK_LIST_BOX(this->listBox), GTK_SELECTION_MULTIPLE);
-    std::vector<std::wstring> *pointerItems = new std::vector<std::wstring>(this->items);
-    g_object_set_data(G_OBJECT(this->listBox), "items", pointerItems);
     gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(this->listBox), FALSE);
 
     g_signal_connect(this->listBox, "row-activated", G_CALLBACK(onRowActivated), NULL);
@@ -270,7 +251,6 @@ void ListBox::createListBox()
 
     gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(rightClick), 3);
 
-    g_object_set_data(G_OBJECT(rightClick), "items", pointerItems);
     g_object_set_data(G_OBJECT(rightClick), "listBox", this->listBox);
     g_signal_connect(rightClick, "pressed", G_CALLBACK(onRightClick), NULL);
     gtk_widget_add_controller(GTK_WIDGET(this->listBox), GTK_EVENT_CONTROLLER(rightClick));
@@ -278,20 +258,16 @@ void ListBox::createListBox()
     addStrings();
 }
 
-void ListBox::setItems(pairVec items)
+void ListBox::setItems(std::vector<std::wstring> items)
 {
-    this->items.clear();
-    this->items.push_back(items.first);
-    for (auto item : items.second)
-        this->items.push_back(item);
+    global::currentItems = items;
+
     if (global::duplicates.size() > 1)
         gtk_grid_remove(GTK_GRID(global::grid), this->listBox);
 
     this->listBox = gtk_list_box_new();
     gtk_widget_set_size_request(this->listBox, 250, -1);
     gtk_list_box_set_selection_mode(GTK_LIST_BOX(this->listBox), GTK_SELECTION_MULTIPLE);
-    std::vector<std::wstring> *pointerItems = new std::vector<std::wstring>(this->items);
-    g_object_set_data(G_OBJECT(this->listBox), "items", pointerItems);
     gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(this->listBox), FALSE);
 
     g_signal_connect(this->listBox, "row-activated", G_CALLBACK(onRowActivated), NULL);
@@ -300,7 +276,6 @@ void ListBox::setItems(pairVec items)
 
     gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(rightClick), 3);
 
-    g_object_set_data(G_OBJECT(rightClick), "items", pointerItems);
     g_object_set_data(G_OBJECT(rightClick), "listBox", this->listBox);
     g_signal_connect(rightClick, "pressed", G_CALLBACK(onRightClick), NULL);
     gtk_widget_add_controller(GTK_WIDGET(this->listBox), GTK_EVENT_CONTROLLER(rightClick));

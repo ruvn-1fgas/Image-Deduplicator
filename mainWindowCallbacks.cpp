@@ -6,7 +6,7 @@
 #include <windows.h>
 #include "duplWindow.cpp"
 
-void createNewWindow(GtkWindow *window, std::wstring directoryPath, std::vector<pairVec> duplicates);
+void createNewWindow(GtkWindow *window, std::wstring directoryPath, std::vector<std::vector<std::wstring>> duplicates);
 
 static void fileChoserOpenResponse(GtkDialog *dialog, int response)
 {
@@ -65,22 +65,6 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
         return;
     }
 
-    GtkWidget *methodsComboBox = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "methodsComboBox");
-    int method = gtk_combo_box_get_active(GTK_COMBO_BOX(methodsComboBox));
-
-    if (method == -1)
-    {
-        GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Выберите метод");
-        gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
-        gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
-        gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
-
-        gtk_window_present(GTK_WINDOW(errorDialog));
-        g_signal_connect(errorDialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
-
-        return;
-    }
-
     std::wstring directoryPath = L"";
     directoryPath.resize(labelText.size());
     int newSize = MultiByteToWideChar(CP_UTF8, 0, labelText.c_str(), labelText.size(), &directoryPath[0], directoryPath.size());
@@ -108,7 +92,7 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
 
     gtk_widget_set_sensitive(widget, FALSE);
 
-    std::vector<pairVec> duplicates = compareImages(directoryPath, method, progressBar);
+    std::vector<std::vector<std::wstring>> duplicates = compareImages(directoryPath, progressBar);
 
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), 0.0);
     gtk_grid_remove_row(GTK_GRID(data), 8);
@@ -130,7 +114,7 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
     createNewWindow(window, directoryPath, duplicates);
 }
 
-void createNewWindow(GtkWindow *parent, std::wstring directoryPath, std::vector<pairVec> duplicates)
+void createNewWindow(GtkWindow *parent, std::wstring directoryPath, std::vector<std::vector<std::wstring>> duplicates)
 {
     DuplWindow *newWindow = new DuplWindow(parent, directoryPath, duplicates);
     newWindow->initialize();

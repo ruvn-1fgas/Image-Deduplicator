@@ -5,15 +5,14 @@ class DuplWindow
 private:
     GtkWindow *parent;
     std::wstring directoryPath;
-    std::vector<pairVec> duplicates;
+    std::vector<std::vector<std::wstring>> duplicates;
     int index = 0;
 
 public:
-    DuplWindow(GtkWindow *parent, std::wstring directoryPath, std::vector<pairVec> duplicates)
+    DuplWindow(GtkWindow *parent, std::wstring directoryPath, std::vector<std::vector<std::wstring>> duplicates)
     {
         this->parent = parent;
         this->directoryPath = directoryPath;
-        global::dirPath = this->directoryPath;
         this->duplicates = duplicates;
         global::duplicates = this->duplicates;
         this->index = 0;
@@ -53,9 +52,6 @@ public:
         {
 
             GtkWidget *previousButton = gtk_button_new_with_label("Назад");
-
-            std::vector<pairVec> *pointerDuplicates = new std::vector<pairVec>(this->duplicates);
-
             g_signal_connect(previousButton, "clicked", G_CALLBACK(onPreviousButtonClicked), this);
             gtk_grid_attach(GTK_GRID(grid), previousButton, 0, 4, 1, 1);
             gtk_grid_attach(GTK_GRID(grid), gtk_label_new("      "), 1, 4, 1, 1);
