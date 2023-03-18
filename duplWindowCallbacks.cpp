@@ -1,7 +1,6 @@
 #include <filesystem>
 #include "methods.cpp"
 #include "structures/ListBox.h"
-#include "structures/settings.cpp"
 
 namespace global
 {

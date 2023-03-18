@@ -5,10 +5,10 @@
 
 namespace settings
 {
-    bool recursive;
-    std::vector<std::wstring> exclude;
+    bool recursive = true;
+    std::vector<std::wstring> excludeList;
     int threshold;
-    int appTheme;
+    int appTheme = 1;
 
     void loadSettings()
     {

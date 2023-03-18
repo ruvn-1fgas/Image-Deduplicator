@@ -369,47 +369,54 @@ void Image::loadJPG(std::wstring filename)
 
 std::vector<bool> Image::pHash() const
 {
-    int width = 32;
-    int height = 32;
-    int size = width * height;
-    int *resized = new int[size];
-    for (int i = 0; i < size; i++)
-        resized[i] = 0;
-
-    for (int y = 0; y < height; y++)
+    try
     {
-        for (int x = 0; x < width; x++)
+        int width = 32;
+        int height = 32;
+        int size = width * height;
+        int *resized = new int[size];
+        for (int i = 0; i < size; i++)
+            resized[i] = 0;
+
+        for (int y = 0; y < height; y++)
         {
-            int x1 = x * this->width / width;
-            int y1 = y * this->height / height;
-            int x2 = (x + 1) * this->width / width;
-            int y2 = (y + 1) * this->height / height;
-            int sum = 0;
-            for (int y3 = y1; y3 < y2; y3++)
+            for (int x = 0; x < width; x++)
             {
-                for (int x3 = x1; x3 < x2; x3++)
+                int x1 = x * this->width / width;
+                int y1 = y * this->height / height;
+                int x2 = (x + 1) * this->width / width;
+                int y2 = (y + 1) * this->height / height;
+                int sum = 0;
+                for (int y3 = y1; y3 < y2; y3++)
                 {
-                    int r, g, b;
+                    for (int x3 = x1; x3 < x2; x3++)
+                    {
+                        int r, g, b;
 
-                    this->getPixel(x3, y3, r, g, b);
-                    sum += r + g + b;
+                        this->getPixel(x3, y3, r, g, b);
+                        sum += r + g + b;
+                    }
                 }
+                resized[y * width + x] = sum / ((x2 - x1) * (y2 - y1));
             }
-            resized[y * width + x] = sum / ((x2 - x1) * (y2 - y1));
         }
+
+        int avg = 0;
+        for (int i = 0; i < size; i++)
+            avg += resized[i];
+        avg /= size;
+
+        std::vector<bool> hash;
+        for (int i = 0; i < size; i++)
+            hash.push_back(resized[i] > avg);
+
+        delete[] resized;
+        return hash;
     }
-
-    int avg = 0;
-    for (int i = 0; i < size; i++)
-        avg += resized[i];
-    avg /= size;
-
-    std::vector<bool> hash;
-    for (int i = 0; i < size; i++)
-        hash.push_back(resized[i] > avg);
-
-    delete[] resized;
-    return hash;
+    catch (...)
+    {
+        return std::vector<bool>(1);
+    }
 }
 
 void Image::resize(int w, int h)

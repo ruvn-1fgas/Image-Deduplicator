@@ -1,8 +1,9 @@
 #include <gtk/gtk.h>
 #include <filesystem>
+#include <iostream>
+#include <thread>
 #include "imageLib/image.cpp"
 #include "structures/settings.cpp"
-#include <thread>
 
 struct pair
 {
@@ -16,11 +17,37 @@ Image getImage(std::wstring path);
 std::vector<std::vector<std::wstring>> compareImages(std::wstring directoryPath, GtkWidget *progressBar)
 {
     std::vector<std::wstring> images;
-    for (const auto &entry : std::filesystem::directory_iterator(directoryPath))
+
+    if (settings::recursive)
     {
-        std::wstring path = entry.path().wstring();
-        if (path.find(L".jpg") != std::wstring::npos || path.find(L".jpeg") != std::wstring::npos || path.find(L".bmp") != std::wstring::npos || path.find(L".png") != std::wstring::npos)
-            images.push_back(path);
+        for (const auto &entry : std::filesystem::recursive_directory_iterator(directoryPath))
+        {
+            // check if entry is excluded
+            bool excluded = false;
+            for (auto exclude : settings::excludeList)
+            {
+                if (entry.path().wstring().find(exclude) != std::wstring::npos)
+                {
+                    excluded = true;
+                    break;
+                }
+            }
+            if (!excluded)
+            {
+                std::wstring path = entry.path().wstring();
+                if (path.find(L".jpg") != std::wstring::npos || path.find(L".jpeg") != std::wstring::npos || path.find(L".bmp") != std::wstring::npos || path.find(L".png") != std::wstring::npos)
+                    images.push_back(path);
+            }
+        }
+    }
+    else
+    {
+        for (const auto &entry : std::filesystem::directory_iterator(directoryPath))
+        {
+            std::wstring path = entry.path().wstring();
+            if (path.find(L".jpg") != std::wstring::npos || path.find(L".jpeg") != std::wstring::npos || path.find(L".bmp") != std::wstring::npos || path.find(L".png") != std::wstring::npos)
+                images.push_back(path);
+        }
     }
 
     std::vector<pair> duplicates = phashMethod(images, progressBar);
@@ -89,8 +116,14 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
 
     for (int i = 0; i < images.size(); i++)
     {
+
         Image img = getImage(images[i]);
         hashes[i] = img.pHash();
+
+        std::string imageName = std::string(images[i].begin(), images[i].end());
+
+        std::cout << imageName << '\n';
+
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
         char *text = g_strdup_printf("Вычисление хеша - %d/%d", i + 1, count);
         gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
