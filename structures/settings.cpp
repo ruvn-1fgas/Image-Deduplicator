@@ -7,7 +7,7 @@ namespace settings
 {
     bool recursive = true;
     std::vector<std::wstring> excludeList;
-    int threshold;
+    int threshold = 80;
     int appTheme = 1;
 
     void loadSettings()

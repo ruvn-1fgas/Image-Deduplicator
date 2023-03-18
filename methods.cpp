@@ -22,7 +22,6 @@ std::vector<std::vector<std::wstring>> compareImages(std::wstring directoryPath,
     {
         for (const auto &entry : std::filesystem::recursive_directory_iterator(directoryPath))
         {
-            // check if entry is excluded
             bool excluded = false;
             for (auto exclude : settings::excludeList)
             {
@@ -57,42 +56,46 @@ std::vector<std::vector<std::wstring>> compareImages(std::wstring directoryPath,
 
     for (int i = 0; i < duplicates.size(); i++)
     {
-        bool found = false;
-        for (int j = 0; j < listOfDuplicates.size(); j++)
+        std::vector<std::wstring> duplicatesList;
+        duplicatesList.push_back(duplicates[i].first);
+        duplicatesList.push_back(duplicates[i].second);
+        for (int j = i + 1; j < duplicates.size(); j++)
         {
-            if (listOfDuplicates[j][0] == duplicates[i].first)
+            if (duplicates[i].first == duplicates[j].first)
             {
-                listOfDuplicates[j].push_back(duplicates[i].second);
-                found = true;
-                break;
+                duplicatesList.push_back(duplicates[j].second);
+                duplicates.erase(duplicates.begin() + j);
+                j--;
             }
         }
-
-        if (!found)
-        {
-            std::vector<std::wstring> list;
-            list.push_back(duplicates[i].first);
-            list.push_back(duplicates[i].second);
-            listOfDuplicates.push_back(list);
-        }
+        listOfDuplicates.push_back(duplicatesList);
     }
+
     return listOfDuplicates;
 }
 
 Image getImage(std::wstring path)
 {
-
     Image img;
     std::wstring ext = path.substr(path.find_last_of(L".") + 1);
+    try
+    {
+        if (ext == L"jpg" || ext == L"jpeg")
+            img.loadJPG(path);
+        else if (ext == L"bmp")
+            img.loadBMP(path);
+        else if (ext == L"png")
+            img.loadPNG(path);
 
-    if (ext == L"jpg" || ext == L"jpeg")
-        img.loadJPG(path);
-    else if (ext == L"bmp")
-        img.loadBMP(path);
-    else if (ext == L"png")
-        img.loadPNG(path);
-
-    return img;
+        return img;
+    }
+    catch (...)
+    {
+        std::cout << "Error loading image\n";
+        Image img(1, 1);
+        img.setPixel(0, 0, 0, 0, 0);
+        return img;
+    }
 }
 
 bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2)
@@ -102,7 +105,7 @@ bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2)
         if (hash1[i] == hash2[i])
             count++;
 
-    return count / (double)hash1.size() > settings::threshold / 100.0;
+    return count / (double)hash1.size() > (settings::threshold / 100.0);
 }
 
 std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progressBar)
@@ -118,11 +121,10 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
     {
 
         Image img = getImage(images[i]);
+
         hashes[i] = img.pHash();
 
         std::string imageName = std::string(images[i].begin(), images[i].end());
-
-        std::cout << imageName << '\n';
 
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
         char *text = g_strdup_printf("Вычисление хеша - %d/%d", i + 1, count);

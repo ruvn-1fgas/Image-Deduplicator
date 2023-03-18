@@ -51,6 +51,20 @@ void onRowMouseEnter(GtkWidget *label, gint x, gint y, gboolean keyboard_mode, G
     {
         GtkListBox *listBox = GTK_LIST_BOX(g_object_get_data(G_OBJECT(label), "listBox"));
         gtk_list_box_remove(listBox, GTK_WIDGET(gtk_widget_get_parent(label)));
+        global::currentItems.erase(global::currentItems.begin() + index);
+        if (global::currentItems.size() > 1)
+        {
+            global::listBoxClass->setItems(global::currentItems);
+        }
+        else
+        {
+            global::duplicates.erase(global::duplicates.begin() + global::index);
+            if (global::duplicates.size() > 0)
+            {
+                global::currentItems = global::duplicates.at(global::index);
+                global::listBoxClass->setItems(global::currentItems);
+            }
+        }
     }
 
     GtkWidget *tooltipWidget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -233,7 +247,7 @@ void ListBox::createListBox()
     gtk_grid_attach(GTK_GRID(global::grid), this->label, 0, 0, 3, 1);
     gtk_grid_attach(GTK_GRID(global::grid), gtk_label_new(""), 0, 1, 3, 1);
     this->listBox = gtk_list_box_new();
-    gtk_widget_set_size_request(this->listBox, 250, -1);
+    gtk_widget_set_size_request(this->listBox, 250, 300);
 
     gtk_list_box_set_selection_mode(GTK_LIST_BOX(this->listBox), GTK_SELECTION_MULTIPLE);
     gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(this->listBox), FALSE);
@@ -255,11 +269,17 @@ void ListBox::setItems(std::vector<std::wstring> items)
 {
     global::currentItems = items;
 
-    if (global::duplicates.size() > 1)
-        gtk_grid_remove(GTK_GRID(global::grid), this->listBox);
+    if (global::duplicates.size() > 0)
+    {
+        // check if grid have this->listbox
+        if (gtk_grid_get_child_at(GTK_GRID(global::grid), 0, 2) == this->listBox)
+            gtk_grid_remove(GTK_GRID(global::grid), this->listBox);
+
+        // gtk_grid_remove(GTK_GRID(global::grid), this->listBox);
+    }
 
     this->listBox = gtk_list_box_new();
-    gtk_widget_set_size_request(this->listBox, 250, -1);
+    gtk_widget_set_size_request(this->listBox, 250, 300);
     gtk_list_box_set_selection_mode(GTK_LIST_BOX(this->listBox), GTK_SELECTION_MULTIPLE);
     gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(this->listBox), FALSE);
 
@@ -274,7 +294,6 @@ void ListBox::setItems(std::vector<std::wstring> items)
     gtk_widget_add_controller(GTK_WIDGET(this->listBox), GTK_EVENT_CONTROLLER(rightClick));
 
     addStrings();
-
     setLabelText(global::index);
 }
 
