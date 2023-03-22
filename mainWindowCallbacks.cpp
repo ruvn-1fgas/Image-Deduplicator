@@ -8,6 +8,7 @@ static void fileChoserOpenResponse(GtkDialog *dialog, int response)
 
     if (response == GTK_RESPONSE_ACCEPT)
     {
+        settings::excludeList.clear();
 
         GFile *folder = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
 
@@ -56,13 +57,17 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
             if (!alreadyExists)
             {
                 bool isSubdir = false;
+                std::filesystem::path pathToAdd = std::filesystem::path(dirPathW);
+
                 for (std::wstring path : settings::excludeList)
                 {
-                    if (dirPathW.find(path) != std::wstring::npos && path != dirPathW)
-                    {
-                        isSubdir = true;
-                        break;
-                    }
+                    std::filesystem::path pathOriginal = std::filesystem::path(path);
+                    for (auto it = pathToAdd.begin(); it != pathToAdd.end(); ++it)
+                        if (pathOriginal == *it)
+                        {
+                            isSubdir = true;
+                            break;
+                        }
                 }
 
                 if (isSubdir)
@@ -83,14 +88,22 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
                 do
                 {
                     found = false;
-                    for (std::vector<std::wstring>::iterator it = settings::excludeList.begin(); it != settings::excludeList.end(); ++it)
+                    for (int i = 0; i < settings::excludeList.size(); i++)
                     {
-                        if ((*it).find(dirPathW) != std::wstring::npos && (*it) != dirPathW)
+                        std::filesystem::path pathInList = std::filesystem::path(settings::excludeList[i]);
+
+                        for (auto it = std::filesystem::recursive_directory_iterator(pathToAdd); it != std::filesystem::recursive_directory_iterator(); ++it)
                         {
-                            settings::excludeList.erase(it);
-                            found = true;
-                            break;
+                            if (it->path() == pathInList)
+                            {
+                                settings::excludeList.erase(settings::excludeList.begin() + i);
+                                found = true;
+                                break;
+                            }
                         }
+
+                        if (found)
+                            break;
                     }
                 } while (found);
 
@@ -102,11 +115,6 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
                 {
                     std::wstring pathPart = path.substr(pathPtr->length());
                     text += pathPart + L", ";
-                    if (text.size() >= 200)
-                    {
-                        text += L"...";
-                        break;
-                    }
                 }
 
                 gtk_label_set_text(GTK_LABEL(excludeLabel), UTF16toUTF8(text).c_str());

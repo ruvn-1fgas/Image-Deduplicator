@@ -37,21 +37,25 @@ static void activate(GtkApplication *app, gpointer user_data)
     // ======= START BUTTON SETUP =======
 
     GtkWidget *startButton = gtk_button_new_with_label("Начать");
-    // set size of start button to 240x60
-    gtk_widget_set_size_request(startButton, 240, 30);
+
+    gtk_widget_set_size_request(startButton, 300, 30);
 
     // ======= GRID SETUP (DIRECTORY) =======
     GtkWidget *openDirButton = gtk_button_new_with_label("Выбрать директорию");
 
-    // + extra line
     gtk_grid_attach(GTK_GRID(mainGrid), openDirButton, 0, 0, 2, 1);
     gtk_grid_attach(GTK_GRID(mainGrid), dirLabel, 0, 1 + extraLine, 2, 1);
 
     if (settings::recursive)
     {
         GtkWidget *excludeDirLabel = gtk_label_new("Исключенные директории - ");
-        gtk_widget_set_vexpand(excludeDirLabel, TRUE);
-        gtk_widget_set_valign(excludeDirLabel, GTK_ALIGN_START);
+
+        gtk_label_set_wrap(GTK_LABEL(excludeDirLabel), TRUE);
+        gtk_label_set_max_width_chars(GTK_LABEL(excludeDirLabel), 1);
+        gtk_label_set_ellipsize(GTK_LABEL(excludeDirLabel), PANGO_ELLIPSIZE_END);
+        gtk_widget_set_hexpand(excludeDirLabel, TRUE);
+        gtk_widget_set_halign(excludeDirLabel, GTK_ALIGN_START);
+
         gtk_grid_attach(GTK_GRID(mainGrid), excludeDirLabel, 0, 3, 2, 1);
 
         g_object_set_data(G_OBJECT(window), "window", excludeDirLabel);
