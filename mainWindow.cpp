@@ -13,6 +13,8 @@ static void activate(GtkApplication *app, gpointer user_data)
     GtkWidget *mainGrid = gtk_grid_new();
     GtkWidget *excludeDirButton;
 
+    // ======= SETTINGS BUTTON SETUP ======
+
     // ======= LABEL SETUP =======
 
     GtkWidget *dirLabel = gtk_label_new("Текущая директория - ");
@@ -21,7 +23,7 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_label_set_max_width_chars(GTK_LABEL(dirLabel), 1);
     gtk_label_set_ellipsize(GTK_LABEL(dirLabel), PANGO_ELLIPSIZE_END);
     gtk_widget_set_hexpand(dirLabel, TRUE);
-    gtk_widget_set_halign(dirLabel, GTK_ALIGN_FILL);
+    gtk_widget_set_halign(dirLabel, GTK_ALIGN_START);
 
     int extraLine = 0;
 
@@ -49,7 +51,7 @@ static void activate(GtkApplication *app, gpointer user_data)
     {
         GtkWidget *excludeDirLabel = gtk_label_new("Исключенные директории - ");
         gtk_widget_set_vexpand(excludeDirLabel, TRUE);
-        gtk_widget_set_valign(excludeDirLabel, GTK_ALIGN_FILL);
+        gtk_widget_set_valign(excludeDirLabel, GTK_ALIGN_START);
         gtk_grid_attach(GTK_GRID(mainGrid), excludeDirLabel, 0, 3, 2, 1);
 
         g_object_set_data(G_OBJECT(window), "window", excludeDirLabel);

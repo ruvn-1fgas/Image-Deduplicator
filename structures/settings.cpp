@@ -5,17 +5,18 @@
 
 namespace settings
 {
-    bool recursive = true;
+    bool recursive;
     std::vector<std::wstring> excludeList;
-    int threshold = 80;
-    int appTheme = 1;
+    int threshold;
+    int appTheme;
+    int language;
 
     void loadSettings()
     {
         if (!std::filesystem::exists("settings.ini"))
         {
             std::ofstream file("settings.ini");
-            file << "[settings]\nRecursive = false\nHash threshold = 80\nApp theme = default\n";
+            file << "[settings]\nRecursive = false\nHash_threshold = 80\nApp_theme = default\nLanguage = en";
             file.close();
         }
 
@@ -32,15 +33,32 @@ namespace settings
                 std::string value = line.substr(line.find('=') + 2);
                 recursive = value == "true" ? true : false;
             }
-            else if (line.find("Hash threshold") != std::string::npos)
+            else if (line.find("Hash_threshold") != std::string::npos)
             {
                 std::string value = line.substr(line.find('=') + 2);
-                threshold = std::stoi(value);
+
+                bool isNumber = true;
+                for (int i = 0; i < value.length(); i++)
+                    if (!isdigit(value[i]))
+                    {
+                        isNumber = false;
+                        break;
+                    }
+
+                if (isNumber && std::stoi(value) >= 0 && std::stoi(value) <= 100)
+                    threshold = std::stoi(value);
+                else
+                    threshold = 80;
             }
-            else if (line.find("App theme") != std::string::npos)
+            else if (line.find("App_theme") != std::string::npos)
             {
                 std::string value = line.substr(line.find('=') + 2);
                 appTheme = value == "default" ? 0 : 1;
+            }
+            else if (line.find("Exclude") != std::string::npos)
+            {
+                std::string value = line.substr(line.find('=') + 2);
+                language = value == "en" ? 0 : 1;
             }
         }
     }

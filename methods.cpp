@@ -1,9 +1,19 @@
 #include <gtk/gtk.h>
 #include <filesystem>
+
 #include <iostream>
-#include <thread>
+#include <chrono>
+
 #include "imageLib/image.cpp"
 #include "structures/settings.cpp"
+
+std::string UTF16toUTF8(std::wstring wString)
+{
+    std::u16string u16(wString.begin(), wString.end());
+    std::wstring_convert<std::codecvt_utf8_utf16<char16_t, 0x10ffff, std::codecvt_mode::little_endian>, char16_t> cnv;
+    std::string utf8 = cnv.to_bytes(u16);
+    return utf8;
+}
 
 struct pair
 {
@@ -76,10 +86,10 @@ std::vector<std::vector<std::wstring>> compareImages(std::wstring directoryPath,
 
 Image getImage(std::wstring path)
 {
-    Image img;
-    std::wstring ext = path.substr(path.find_last_of(L".") + 1);
     try
     {
+        Image img;
+        std::wstring ext = path.substr(path.find_last_of(L".") + 1);
         if (ext == L"jpg" || ext == L"jpeg")
             img.loadJPG(path);
         else if (ext == L"bmp")
@@ -91,7 +101,6 @@ Image getImage(std::wstring path)
     }
     catch (...)
     {
-        std::cout << "Error loading image\n";
         Image img(1, 1);
         img.setPixel(0, 0, 0, 0, 0);
         return img;
@@ -112,22 +121,14 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
 {
     std::vector<pair> duplicates;
     std::vector<bool> visited(images.size(), false);
-
-    int count = images.size();
-
     std::vector<std::vector<bool>> hashes(images.size());
 
     for (int i = 0; i < images.size(); i++)
     {
-
         Image img = getImage(images[i]);
-
         hashes[i] = img.pHash();
-
-        std::string imageName = std::string(images[i].begin(), images[i].end());
-
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
-        char *text = g_strdup_printf("Вычисление хеша - %d/%d", i + 1, count);
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)images.size());
+        char *text = g_strdup_printf("Вычисление хеша - %d/%d", i + 1, images.size());
         gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
         while (g_main_context_pending(NULL))
             g_main_context_iteration(NULL, FALSE);
@@ -154,8 +155,8 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
                 g_main_context_iteration(NULL, FALSE);
         }
 
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)count);
-        char *text = g_strdup_printf("Сравнение изображений - %d%%", (int)(i / (double)count * 100));
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)hashes.size());
+        char *text = g_strdup_printf("Сравнение изображений - %d%%", (int)(i / (double)hashes.size() * 100));
         gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
         while (g_main_context_pending(NULL))
             g_main_context_iteration(NULL, FALSE);

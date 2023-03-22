@@ -1,4 +1,3 @@
-#include <filesystem>
 #include "methods.cpp"
 #include "structures/ListBox.h"
 
@@ -11,14 +10,6 @@ namespace global
     ListBox *listBoxClass;
     std::vector<std::wstring> currentItems;
 };
-
-std::string UTF16toUTF8(std::wstring wString)
-{
-    std::u16string u16(wString.begin(), wString.end());
-    std::wstring_convert<std::codecvt_utf8_utf16<char16_t, 0x10ffff, std::codecvt_mode::little_endian>, char16_t> cnv;
-    std::string utf8 = cnv.to_bytes(u16);
-    return utf8;
-}
 
 void onRowActivated(GtkListBox *listBox, GtkListBoxRow *row, gpointer data)
 {
