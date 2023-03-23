@@ -27,8 +27,8 @@ public:
         global::window = newWindow;
 
         gtk_window_set_resizable(GTK_WINDOW(newWindow), FALSE);
-
-        gtk_window_set_title(GTK_WINDOW(newWindow), "Duplicates");
+        std::string windowTitle = settings::language == 1 ? language::dict["ru"]["duplWindow.Title"] : language::dict["en"]["duplWindow.Title"];
+        gtk_window_set_title(GTK_WINDOW(newWindow), windowTitle.c_str());
         gtk_window_set_default_size(GTK_WINDOW(newWindow), 320, 480);
         gtk_window_set_modal(GTK_WINDOW(newWindow), TRUE);
         gtk_window_set_transient_for(GTK_WINDOW(newWindow), GTK_WINDOW(this->parent));
@@ -50,12 +50,14 @@ public:
         if (this->duplicates.size() > 1)
         {
 
-            GtkWidget *previousButton = gtk_button_new_with_label("Назад");
+            std::string prevButtonText = settings::language == 1 ? language::dict["ru"]["duplWindow.PrevButton"] : language::dict["en"]["duplWindow.PrevButton"];
+            GtkWidget *previousButton = gtk_button_new_with_label(prevButtonText.c_str());
             g_signal_connect(previousButton, "clicked", G_CALLBACK(onPreviousButtonClicked), this);
             gtk_grid_attach(GTK_GRID(grid), previousButton, 0, 4, 1, 1);
             gtk_grid_attach(GTK_GRID(grid), gtk_label_new("      "), 1, 4, 1, 1);
 
-            GtkWidget *nextButton = gtk_button_new_with_label("Вперед");
+            std::string nextButtonText = settings::language == 1 ? language::dict["ru"]["duplWindow.NextButton"] : language::dict["en"]["duplWindow.NextButton"];
+            GtkWidget *nextButton = gtk_button_new_with_label(nextButtonText.c_str());
 
             g_signal_connect(nextButton, "clicked", G_CALLBACK(onNextButtonClicked), this);
             gtk_grid_attach(GTK_GRID(grid), nextButton, 2, 4, 1, 1);
