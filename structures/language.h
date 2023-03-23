@@ -51,5 +51,4 @@ namespace language
                    {"duplWindow.ListBox.RightClick.Delete", "Удалить"},
                    {"duplWindow.ListBox.OpenFile.Error.FileNotFound", "Изображение не найдено"},
                }}}; // languages
-    // dict["en"]["mainWindow.OpenDirButton"] = "Open directory";
 };
