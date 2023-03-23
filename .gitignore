@@ -2,5 +2,6 @@
 .vscode/*
 images/*
 images_test/*
+structures/lang.txt
 *.exe
 settings.ini
