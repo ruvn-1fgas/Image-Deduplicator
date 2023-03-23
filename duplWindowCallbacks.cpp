@@ -262,11 +262,8 @@ void ListBox::setItems(std::vector<std::wstring> items)
 
     if (global::duplicates.size() > 0)
     {
-        // check if grid have this->listbox
         if (gtk_grid_get_child_at(GTK_GRID(global::grid), 0, 2) == this->listBox)
             gtk_grid_remove(GTK_GRID(global::grid), this->listBox);
-
-        // gtk_grid_remove(GTK_GRID(global::grid), this->listBox);
     }
 
     this->listBox = gtk_list_box_new();

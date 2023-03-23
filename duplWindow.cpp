@@ -6,7 +6,6 @@ private:
     GtkWindow *parent;
     std::wstring directoryPath;
     std::vector<std::vector<std::wstring>> duplicates;
-    int index = 0;
 
 public:
     DuplWindow(GtkWindow *parent, std::wstring directoryPath, std::vector<std::vector<std::wstring>> duplicates)
@@ -15,7 +14,7 @@ public:
         this->directoryPath = directoryPath;
         this->duplicates = duplicates;
         global::duplicates = this->duplicates;
-        this->index = 0;
+        global::index = 0;
     }
 
     void initialize()
