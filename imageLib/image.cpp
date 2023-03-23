@@ -334,7 +334,6 @@ void Image::loadJPG(std::wstring filename)
     int bytes_per_pixel = cinfo.output_components;
 
     delete[] this->data;
-    // create buffer
     unsigned long int dwBufferBytes = this->width * this->height * 3;
     unsigned char *lpData = (unsigned char *)malloc(sizeof(unsigned char) * dwBufferBytes);
 

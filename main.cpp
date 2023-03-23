@@ -1,5 +1,3 @@
-#include <windows.h>
-
 #include "mainWindow.cpp"
 
 int main(int argc, char **argv)
