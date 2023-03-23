@@ -50,12 +50,14 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     // ====== OPEN DIR BUTTON SETUP ======
 
-    GtkWidget *openDirButton = gtk_button_new_with_label("Выбрать директорию");
+    std::string openDirButtonText = settings::language == 1 ? language::dict["ru"]["mainWindow.OpenDirButton"] : language::dict["en"]["mainWindow.OpenDirButton"];
+    GtkWidget *openDirButton = gtk_button_new_with_label(openDirButtonText.c_str());
     gtk_grid_attach(GTK_GRID(mainGrid), openDirButton, 0, 0, 2, 1);
 
     // ======= LABEL SETUP =======
 
-    GtkWidget *dirLabel = gtk_label_new("Текущая директория - ");
+    std::string dirLabelText = settings::language == 1 ? language::dict["ru"]["mainWindow.DirLabel"] : language::dict["en"]["mainWindow.DirLabel"];
+    GtkWidget *dirLabel = gtk_label_new(dirLabelText.c_str());
 
     gtk_label_set_wrap(GTK_LABEL(dirLabel), TRUE);
     gtk_label_set_max_width_chars(GTK_LABEL(dirLabel), 1);
@@ -68,10 +70,12 @@ static void activate(GtkApplication *app, gpointer user_data)
     if (settings::recursive)
     {
         gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 2, 2, 1);
-        excludeDirButton = gtk_button_new_with_label("Исключить директории");
+        std::string excludeDirButtonText = settings::language == 1 ? language::dict["ru"]["mainWindow.ExcludeDirButton"] : language::dict["en"]["mainWindow.ExcludeDirButton"];
+        excludeDirButton = gtk_button_new_with_label(excludeDirButtonText.c_str());
         gtk_grid_attach(GTK_GRID(mainGrid), excludeDirButton, 0, 3, 2, 1);
 
-        GtkWidget *excludeDirLabel = gtk_label_new("Исключенные директории - ");
+        std::string excludeDirLabelText = settings::language == 1 ? language::dict["ru"]["mainWindow.ExcludeDirLabel"] : language::dict["en"]["mainWindow.ExcludeDirLabel"];
+        GtkWidget *excludeDirLabel = gtk_label_new(excludeDirLabelText.c_str());
 
         gtk_label_set_wrap(GTK_LABEL(excludeDirLabel), TRUE);
         gtk_label_set_max_width_chars(GTK_LABEL(excludeDirLabel), 1);
@@ -92,7 +96,8 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     // ====== START BUTTON SETUP ======
 
-    GtkWidget *startButton = gtk_button_new_with_label("Начать");
+    std::string startButtonText = settings::language == 1 ? language::dict["ru"]["mainWindow.StartButton"] : language::dict["en"]["mainWindow.StartButton"];
+    GtkWidget *startButton = gtk_button_new_with_label(startButtonText.c_str());
     gtk_widget_set_size_request(startButton, 300, 30);
     gtk_grid_attach(GTK_GRID(mainGrid), startButton, 0, 6, 2, 1);
 
