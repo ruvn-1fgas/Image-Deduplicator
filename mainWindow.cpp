@@ -24,7 +24,7 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
 
     GtkWidget *mainGrid = gtk_grid_new();
-    settings::mainWindowGrid = mainGrid;
+    settings::mainGrid = mainGrid;
     GtkWidget *excludeDirButton;
 
     // ======= SETTINGS BUTTON SETUP ======
@@ -91,7 +91,6 @@ static void activate(GtkApplication *app, gpointer user_data)
         g_signal_connect(excludeDirButton, "clicked", G_CALLBACK(excludeDirButton_clicked), NULL);
     }
 
-    // vertical gap
     gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 5, 2, 1);
 
     // ====== START BUTTON SETUP ======
@@ -114,7 +113,18 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     g_signal_connect(startButton, "clicked", G_CALLBACK(startButton_clicked), mainGrid);
 
-    // // ======= WINDOW SHOW =======
+    // ======= SETTINGS SETUP =======
+
+    settings::settingsButtonClicked = settingsButton_clicked;
+    // settings::infoButtonClicked = infoButton_clicked;
+    settings::excludeDirButtonClicked = excludeDirButton_clicked;
+    settings::openDirButtonClicked = openDirButton_clicked;
+    settings::startButtonClicked = startButton_clicked;
+
+    settings::window = window;
+    settings::dirLabel = dirLabel;
+
+    // ======= WINDOW SHOW =======
 
     gtk_window_set_child(GTK_WINDOW(window), mainGrid);
 
