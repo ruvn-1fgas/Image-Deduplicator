@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <filesystem>
+#include "language.h"
 
 static void excludeDirButton_clicked(GtkWidget *widget, gpointer data);
 
@@ -38,6 +39,10 @@ namespace settings
         }
         if (is)
         {
+            gtk_grid_insert_row(GTK_GRID(mainWindowGrid), 2);
+            gtk_grid_insert_row(GTK_GRID(mainWindowGrid), 3);
+            gtk_grid_insert_row(GTK_GRID(mainWindowGrid), 4);
+
             gtk_grid_attach(GTK_GRID(mainWindowGrid), gtk_label_new(""), 0, 2, 2, 1);
             GtkWidget *excludeDirButton = gtk_button_new_with_label("Исключить директории");
             gtk_grid_attach(GTK_GRID(mainWindowGrid), excludeDirButton, 0, 3, 2, 1);
@@ -53,7 +58,7 @@ namespace settings
             gtk_grid_attach(GTK_GRID(mainWindowGrid), excludeDirLabel, 0, 4, 2, 1);
 
             g_object_set_data(G_OBJECT(excludeDirButton), "excludeDirLabel", excludeDirLabel);
-            g_signal_connect(excludeDirButton, "clicked", G_CALLBACK(excludeDirButton_clicked), NULL);
+            // g_signal_connect(excludeDirButton, "clicked", G_CALLBACK(excludeDirButton_clicked), NULL);
         }
     }
 
