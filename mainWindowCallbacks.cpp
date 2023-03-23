@@ -3,6 +3,140 @@
 
 void createNewWindow(GtkWindow *window, std::wstring directoryPath, std::vector<std::vector<std::wstring>> duplicates);
 
+void settingsDialogResponse(GtkDialog *dialog, gint responseId, gpointer data)
+{
+    if (responseId == GTK_RESPONSE_APPLY)
+    {
+        GtkWidget *grid = (GtkWidget *)g_object_get_data(G_OBJECT(dialog), "grid");
+
+        GtkWidget *recursiveCheckbox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "recursiveCheckbox");
+        GtkWidget *hashThresholdSlider = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "hashThresholdSlider");
+        GtkWidget *themeComboBox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "themeComboBox");
+        GtkWidget *languageComboBox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "languageComboBox");
+
+        bool recursive = gtk_check_button_get_active(GTK_CHECK_BUTTON(recursiveCheckbox));
+        int threshold = gtk_range_get_value(GTK_RANGE(hashThresholdSlider));
+        bool appTheme = gtk_combo_box_get_active(GTK_COMBO_BOX(themeComboBox)) == 0 ? true : false;
+        bool language = gtk_combo_box_get_active(GTK_COMBO_BOX(languageComboBox)) == 0 ? false : true;
+
+        std::cout << "Recursive - " << recursive << std::endl;
+        std::cout << "Threshold - " << threshold << std::endl;
+        std::cout << "AppTheme - " << appTheme << std::endl;
+        std::cout << "Language - " << language << std::endl;
+
+        settings::saveSettings(recursive, threshold, appTheme, language);
+    }
+    gtk_window_destroy(GTK_WINDOW(dialog));
+}
+
+void settingsButton_clicked(GtkWidget *widget, gpointer data)
+{
+    GtkWidget *window = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "window");
+    GtkWidget *dialog = gtk_dialog_new_with_buttons("Настройки", GTK_WINDOW(window), GTK_DIALOG_MODAL, NULL);
+
+    gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
+
+    gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_APPLY);
+
+    gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
+    gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), TRUE);
+
+    GtkWidget *contentArea = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+
+    // ======= RECURSIVE =======
+
+    GtkWidget *recursiveLabel = gtk_label_new("Рекурсивный поиск");
+    gtk_widget_set_halign(recursiveLabel, GTK_ALIGN_START);
+
+    gtk_grid_attach(GTK_GRID(grid), recursiveLabel, 0, 0, 1, 1);
+
+    GtkWidget *recursiveCheckbox = gtk_check_button_new();
+    gtk_check_button_set_active(GTK_CHECK_BUTTON(recursiveCheckbox), settings::recursive);
+
+    gtk_grid_attach(GTK_GRID(grid), recursiveCheckbox, 3, 0, 1, 1);
+
+    // ======= HASH THRESHOLD =======
+
+    GtkWidget *hashThresholdLabel = gtk_label_new("Порог схожести");
+    gtk_widget_set_halign(hashThresholdLabel, GTK_ALIGN_START);
+
+    gtk_grid_attach(GTK_GRID(grid), hashThresholdLabel, 0, 1, 1, 1);
+    GtkWidget *hashThresholdSlider = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
+    gtk_scale_set_value_pos(GTK_SCALE(hashThresholdSlider), GTK_POS_RIGHT);
+    gtk_range_set_value(GTK_RANGE(hashThresholdSlider), settings::threshold);
+    gtk_scale_set_digits(GTK_SCALE(hashThresholdSlider), 0);
+
+    gtk_scale_set_draw_value(GTK_SCALE(hashThresholdSlider), TRUE);
+    gtk_scale_set_format_value_func(
+        GTK_SCALE(hashThresholdSlider), [](GtkScale *scale, double value, gpointer user_data) -> gchar *
+        { return g_strdup_printf("%d%%", (int)value); },
+        NULL, NULL);
+
+    gtk_widget_set_size_request(hashThresholdSlider, 200, -1);
+
+    gtk_grid_attach(GTK_GRID(grid), hashThresholdSlider, 1, 1, 5, 1);
+
+    // ======= APP THEME =======
+
+    GtkWidget *themeLabel = gtk_label_new("Тема приложения");
+    gtk_widget_set_halign(themeLabel, GTK_ALIGN_START);
+
+    gtk_grid_attach(GTK_GRID(grid), themeLabel, 0, 2, 1, 1);
+
+    GtkWidget *themeComboBox = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(themeComboBox), "light", "Светлая");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(themeComboBox), "dark", "Темная");
+    std::string activeID = settings::appTheme ? "light" : "dark";
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(themeComboBox), activeID.c_str());
+
+    gtk_grid_attach(GTK_GRID(grid), themeComboBox, 2, 2, 3, 1);
+
+    // ======= LANGUAGE =======
+
+    GtkWidget *languageLabel = gtk_label_new("Язык приложения");
+    gtk_widget_set_halign(languageLabel, GTK_ALIGN_START);
+
+    gtk_grid_attach(GTK_GRID(grid), languageLabel, 0, 3, 1, 1);
+
+    GtkWidget *languageComboBox = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(languageComboBox), "en", "English");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(languageComboBox), "ru", "Русский");
+    std::cout << settings::language << '\n';
+    int active = settings::language ? 1 : 0;
+    gtk_combo_box_set_active(GTK_COMBO_BOX(languageComboBox), active);
+    gtk_grid_attach(GTK_GRID(grid), languageComboBox, 2, 3, 3, 1);
+
+    // ======= DIALOG SETUP =======
+
+    gtk_widget_set_parent(grid, contentArea);
+    gtk_widget_set_margin_bottom(grid, 25);
+    gtk_widget_set_margin_top(grid, 25);
+
+    GtkWidget *cancelButton = gtk_dialog_add_button(GTK_DIALOG(dialog), "Отмена", GTK_RESPONSE_CANCEL);
+    GtkWidget *applyButton = gtk_dialog_add_button(GTK_DIALOG(dialog), "Применить", GTK_RESPONSE_APPLY);
+
+    gtk_widget_set_margin_end(cancelButton, 10);
+
+    gtk_widget_set_halign(grid, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(grid, GTK_ALIGN_CENTER);
+
+    gtk_window_set_default_size(GTK_WINDOW(dialog), 350, 300);
+    gtk_window_present(GTK_WINDOW(dialog));
+
+    g_object_set_data(G_OBJECT(dialog), "grid", grid);
+    g_object_set_data(G_OBJECT(grid), "recursiveCheckbox", recursiveCheckbox);
+    g_object_set_data(G_OBJECT(grid), "hashThresholdSlider", hashThresholdSlider);
+    g_object_set_data(G_OBJECT(grid), "themeComboBox", themeComboBox);
+    g_object_set_data(G_OBJECT(grid), "languageComboBox", languageComboBox);
+
+    g_signal_connect(dialog, "response", G_CALLBACK(settingsDialogResponse), NULL);
+}
+
 static void fileChoserOpenResponse(GtkDialog *dialog, int response)
 {
 
@@ -150,23 +284,6 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
     gtk_window_destroy(GTK_WINDOW(dialog));
 }
 
-static void openDirButton_clicked(GtkWidget *widget, gpointer data)
-{
-    GtkWindow *window = (GtkWindow *)g_object_get_data(G_OBJECT(widget), "window");
-
-    GtkWidget *dialog = gtk_file_chooser_dialog_new("Выберите директорию", window, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, "_Отмена", GTK_RESPONSE_CANCEL, "_Выбрать", GTK_RESPONSE_ACCEPT, NULL);
-    gtk_window_set_transient_for(GTK_WINDOW(dialog), window);
-    gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), TRUE);
-
-    gtk_window_present(GTK_WINDOW(dialog));
-
-    GtkWidget *dirLabel = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "dirLabel");
-    g_object_set_data(G_OBJECT(dialog), "window", window);
-    g_object_set_data(G_OBJECT(dialog), "dirLabel", dirLabel);
-    g_signal_connect(dialog, "response", G_CALLBACK(fileChoserOpenResponse), NULL);
-}
-
 static void excludeDirButton_clicked(GtkWidget *widget, gpointer data)
 {
     GtkWindow *window = (GtkWindow *)g_object_get_data(G_OBJECT(widget), "window");
@@ -207,6 +324,22 @@ static void excludeDirButton_clicked(GtkWidget *widget, gpointer data)
     g_object_set_data(G_OBJECT(dialog), "directoryPath", directoryPathPtr);
     g_object_set_data(G_OBJECT(dialog), "dirLabel", excludeDirLabel);
     g_signal_connect(dialog, "response", G_CALLBACK(fileChoserExclude), NULL);
+}
+static void openDirButton_clicked(GtkWidget *widget, gpointer data)
+{
+    GtkWindow *window = (GtkWindow *)g_object_get_data(G_OBJECT(widget), "window");
+
+    GtkWidget *dialog = gtk_file_chooser_dialog_new("Выберите директорию", window, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, "_Отмена", GTK_RESPONSE_CANCEL, "_Выбрать", GTK_RESPONSE_ACCEPT, NULL);
+    gtk_window_set_transient_for(GTK_WINDOW(dialog), window);
+    gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), TRUE);
+
+    gtk_window_present(GTK_WINDOW(dialog));
+
+    GtkWidget *dirLabel = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "dirLabel");
+    g_object_set_data(G_OBJECT(dialog), "window", window);
+    g_object_set_data(G_OBJECT(dialog), "dirLabel", dirLabel);
+    g_signal_connect(dialog, "response", G_CALLBACK(fileChoserOpenResponse), NULL);
 }
 
 static void startButton_clicked(GtkWidget *widget, gpointer data)
