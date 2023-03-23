@@ -175,7 +175,30 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
         char *dirPath = g_file_get_path(folder);
         std::string dirPathS = std::string(dirPath, dirPath + strlen(dirPath));
 
-        if (dirPathS.find(UTF16toUTF8(*pathPtr)) != std::wstring::npos && dirPathS != UTF16toUTF8(*pathPtr))
+        bool isSubDirOfCurrent = false;
+        if (!isSubDirOfCurrent)
+        {
+            std::filesystem::path pathOriginal = *pathPtr;
+
+            GtkWidget *tempLabel = gtk_label_new("");
+            gtk_label_set_text(GTK_LABEL(tempLabel), dirPath);
+            std::string tempLabelText = gtk_label_get_text(GTK_LABEL(tempLabel));
+            std::wstring dirPathW = L"";
+            dirPathW.resize(tempLabelText.size());
+            int newSize = MultiByteToWideChar(CP_UTF8, 0, tempLabelText.c_str(), tempLabelText.size(), &dirPathW[0], dirPathW.size());
+            dirPathW.resize(newSize);
+
+            std::filesystem::path pathToCheck = dirPathW;
+
+            for (auto &p : std::filesystem::recursive_directory_iterator(pathOriginal))
+                if (p.path() == pathToCheck)
+                {
+                    isSubDirOfCurrent = true;
+                    break;
+                }
+        }
+
+        if (isSubDirOfCurrent)
         {
             GtkWidget *tempLabel = gtk_label_new("");
             gtk_label_set_text(GTK_LABEL(tempLabel), dirPath);
@@ -186,6 +209,7 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
             dirPathW.resize(newSize);
 
             bool alreadyExists = false;
+
             for (std::wstring path : settings::excludeList)
                 if (path == dirPathW)
                 {
