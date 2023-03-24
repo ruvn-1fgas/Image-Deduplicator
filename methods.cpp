@@ -55,6 +55,12 @@ std::vector<std::vector<std::wstring>> compareImages(std::wstring directoryPath,
         }
     }
 
+    if (images.size() == 0)
+    {
+        std::vector<std::vector<std::wstring>> empty;
+        return empty;
+    }
+
     std::vector<pair> duplicates = phashMethod(images, progressBar);
     images.clear();
 
