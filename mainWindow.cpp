@@ -24,7 +24,6 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
 
     GtkWidget *mainGrid = gtk_grid_new();
-    settings::mainGrid = mainGrid;
     GtkWidget *excludeDirButton;
     GtkWidget *listOfExcluded;
 
@@ -126,8 +125,10 @@ static void activate(GtkApplication *app, gpointer user_data)
     settings::openDirButtonClicked = openDirButton_clicked;
     settings::startButtonClicked = startButton_clicked;
 
+    settings::mainGrid = mainGrid;
     settings::window = window;
     settings::dirLabel = dirLabel;
+    settings::listOfExcluded = listOfExcluded;
 
     // ======= WINDOW SHOW =======
 
