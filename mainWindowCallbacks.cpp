@@ -148,7 +148,17 @@ static void fileChoserOpenResponse(GtkDialog *dialog, int response)
 
     if (response == GTK_RESPONSE_ACCEPT)
     {
-        settings::excludeList.clear();
+        if (settings::recursive)
+        {
+            settings::excludeList.clear();
+            GtkWidget *listOfExcluded = (GtkWidget *)g_object_get_data(G_OBJECT(dialog), "listOfExcluded");
+
+            while (gtk_list_box_get_row_at_index(GTK_LIST_BOX(listOfExcluded), 0) != NULL)
+            {
+                GtkWidget *child = gtk_widget_get_first_child(listOfExcluded);
+                gtk_list_box_remove(GTK_LIST_BOX(listOfExcluded), child);
+            }
+        }
 
         GFile *folder = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
 
@@ -171,6 +181,8 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
 {
     if (response == GTK_RESPONSE_ACCEPT)
     {
+        GtkWindow *window = (GtkWindow *)g_object_get_data(G_OBJECT(dialog), "window");
+
         GFile *folder = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
         std::wstring *pathPtr = (std::wstring *)g_object_get_data(G_OBJECT(dialog), "directoryPath");
 
@@ -202,9 +214,9 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
 
         if (!isSubDirOfCurrent)
         {
-            GtkWindow *window = (GtkWindow *)g_object_get_data(G_OBJECT(dialog), "window");
             std::string errorDialogText = language::dict["ExcludeDialog.Error.DirectoryIsNotSubDir"][settings::language];
             GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, errorDialogText.c_str());
+
             gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
             gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
             gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
@@ -220,9 +232,9 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
 
         if (isAlreadyExists)
         {
-            GtkWindow *window = (GtkWindow *)g_object_get_data(G_OBJECT(dialog), "window");
             std::string errorDialogText = language::dict["ExcludeDialog.Error.DirectoryIsAlreadyExcluded"][settings::language];
             GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, errorDialogText.c_str());
+            
             gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
             gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
             gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
@@ -249,9 +261,9 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
 
         if (isSubDirOfAnother)
         {
-            GtkWindow *window = (GtkWindow *)g_object_get_data(G_OBJECT(dialog), "window");
             std::string errorDialogText = language::dict["ExcludeDialog.Error.DirectoryIsSubDir"][settings::language];
             GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, errorDialogText.c_str());
+            
             gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
             gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
             gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
@@ -289,19 +301,27 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
         } while (isParentDirOfAnother);
 
         // Add the directory to the exclude list
+
         settings::excludeList.push_back(dirPathW);
         std::sort(settings::excludeList.begin(), settings::excludeList.end());
 
-        GtkWidget *excludeLabel = (GtkWidget *)g_object_get_data(G_OBJECT(dialog), "dirLabel");
+        GtkWidget *listOfExcluded = (GtkWidget *)g_object_get_data(G_OBJECT(dialog), "listOfExcluded");
+        while (gtk_list_box_get_row_at_index(GTK_LIST_BOX(listOfExcluded), 0) != NULL)
+        {
+            GtkWidget *child = gtk_widget_get_first_child(listOfExcluded);
+            gtk_list_box_remove(GTK_LIST_BOX(listOfExcluded), child);
+        }
 
-        std::string locText = language::dict["ExcludedDirectories.Label"][settings::language];
-        std::wstring text = std::wstring(locText.begin(), locText.end());
-        for (std::wstring path : settings::excludeList)
+        for (auto path : settings::excludeList)
         {
             std::wstring pathPart = path.substr(pathPtr->length());
-            text += pathPart + L", ";
+            GtkWidget *label = gtk_label_new(UTF16toUTF8(pathPart).c_str());
+
+            gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_START);
+            gtk_widget_set_halign(label, GTK_ALIGN_START);
+
+            gtk_list_box_append(GTK_LIST_BOX(listOfExcluded), label);
         }
-        gtk_label_set_text(GTK_LABEL(excludeLabel), UTF16toUTF8(text).c_str());
     }
     gtk_window_destroy(GTK_WINDOW(dialog));
 }
@@ -312,13 +332,14 @@ static void excludeDirButton_clicked(GtkWidget *widget, gpointer data)
     GtkWidget *dirLabel = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "dirLabel");
     std::string dirLabelText = gtk_label_get_text(GTK_LABEL(dirLabel));
 
-    GtkWidget *excludeDirLabel = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "excludeDirLabel");
+    GtkWidget *listOfExcluded = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "listOfExcluded");
 
     dirLabelText.erase(0, dirLabelText.find(":") - 1);
     if (dirLabelText.size() == 0)
     {
         std::string errorDialogText = language::dict["ExcludeDialog.Error.DirectoryNotChosen"][settings::language];
         GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, errorDialogText.c_str());
+        
         gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
         gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
         gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
@@ -354,7 +375,7 @@ static void excludeDirButton_clicked(GtkWidget *widget, gpointer data)
 
     g_object_set_data(G_OBJECT(dialog), "window", window);
     g_object_set_data(G_OBJECT(dialog), "directoryPath", directoryPathPtr);
-    g_object_set_data(G_OBJECT(dialog), "dirLabel", excludeDirLabel);
+    g_object_set_data(G_OBJECT(dialog), "listOfExcluded", listOfExcluded);
     g_signal_connect(dialog, "response", G_CALLBACK(fileChoserExclude), NULL);
 }
 static void openDirButton_clicked(GtkWidget *widget, gpointer data)
@@ -378,8 +399,15 @@ static void openDirButton_clicked(GtkWidget *widget, gpointer data)
     gtk_window_present(GTK_WINDOW(dialog));
 
     GtkWidget *dirLabel = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "dirLabel");
+    if (settings::recursive)
+    {
+        GtkWidget *listOfExcluded = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "listOfExcluded");
+        g_object_set_data(G_OBJECT(dialog), "listOfExcluded", listOfExcluded);
+    }
+
     g_object_set_data(G_OBJECT(dialog), "window", window);
     g_object_set_data(G_OBJECT(dialog), "dirLabel", dirLabel);
+
     g_signal_connect(dialog, "response", G_CALLBACK(fileChoserOpenResponse), NULL);
 }
 
@@ -394,6 +422,7 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
     {
         std::string errorDialogText = language::dict["StartButton.Error.DirectoryNotChosen"][settings::language];
         GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Выберите директорию");
+
         gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
         gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
         gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);

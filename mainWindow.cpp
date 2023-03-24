@@ -26,6 +26,7 @@ static void activate(GtkApplication *app, gpointer user_data)
     GtkWidget *mainGrid = gtk_grid_new();
     settings::mainGrid = mainGrid;
     GtkWidget *excludeDirButton;
+    GtkWidget *listOfExcluded;
 
     // ======= SETTINGS BUTTON SETUP ======
 
@@ -74,36 +75,40 @@ static void activate(GtkApplication *app, gpointer user_data)
         excludeDirButton = gtk_button_new_with_label(excludeDirButtonText.c_str());
         gtk_grid_attach(GTK_GRID(mainGrid), excludeDirButton, 0, 3, 2, 1);
 
-        std::string excludeDirLabelText = language::dict["ExcludeDirLabel"][settings::language];
-        GtkWidget *excludeDirLabel = gtk_label_new(excludeDirLabelText.c_str());
+        listOfExcluded = gtk_list_box_new();
 
-        gtk_label_set_wrap(GTK_LABEL(excludeDirLabel), TRUE);
-        gtk_label_set_max_width_chars(GTK_LABEL(excludeDirLabel), 1);
-        gtk_label_set_ellipsize(GTK_LABEL(excludeDirLabel), PANGO_ELLIPSIZE_END);
-        gtk_widget_set_hexpand(excludeDirLabel, TRUE);
-        gtk_widget_set_halign(excludeDirLabel, GTK_ALIGN_START);
+        gtk_list_box_set_selection_mode(GTK_LIST_BOX(listOfExcluded), GTK_SELECTION_MULTIPLE);
+        gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(listOfExcluded), FALSE);
+        gtk_widget_set_size_request(listOfExcluded, 300, 40);
+        gtk_widget_set_vexpand(listOfExcluded, FALSE);
 
-        gtk_grid_attach(GTK_GRID(mainGrid), excludeDirLabel, 0, 4, 2, 1);
+        GtkWidget *scrolledWindow = gtk_scrolled_window_new();
+        gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+        gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scrolledWindow), 40);
+        gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledWindow), listOfExcluded);
 
-        g_object_set_data(G_OBJECT(window), "window", excludeDirLabel);
+        gtk_grid_attach(GTK_GRID(mainGrid), scrolledWindow, 0, 4, 2, 1);
+
+        g_object_set_data(G_OBJECT(excludeDirButton), "window", window);
         g_object_set_data(G_OBJECT(excludeDirButton), "dirLabel", dirLabel);
-        g_object_set_data(G_OBJECT(excludeDirButton), "excludeDirLabel", excludeDirLabel);
+        g_object_set_data(G_OBJECT(excludeDirButton), "listOfExcluded", listOfExcluded);
         g_signal_connect(excludeDirButton, "clicked", G_CALLBACK(excludeDirButton_clicked), NULL);
     }
-
-    gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 5, 2, 1);
 
     // ====== START BUTTON SETUP ======
 
     std::string startButtonText = language::dict["StartButtonLabel"][settings::language];
     GtkWidget *startButton = gtk_button_new_with_label(startButtonText.c_str());
     gtk_widget_set_size_request(startButton, 300, 30);
-    gtk_grid_attach(GTK_GRID(mainGrid), startButton, 0, 6, 2, 1);
+    gtk_grid_attach(GTK_GRID(mainGrid), startButton, 0, 5, 2, 1);
 
     // ======= OPEN DIR BUTTON EVENT =======
 
-    g_object_set_data(G_OBJECT(window), "window", window);
+    g_object_set_data(G_OBJECT(openDirButton), "window", window);
     g_object_set_data(G_OBJECT(openDirButton), "dirLabel", dirLabel);
+    if (settings::recursive)
+        g_object_set_data(G_OBJECT(openDirButton), "listOfExcluded", listOfExcluded);
+
     g_signal_connect(openDirButton, "clicked", G_CALLBACK(openDirButton_clicked), NULL);
 
     // ======= START BUTTON EVENT =======
