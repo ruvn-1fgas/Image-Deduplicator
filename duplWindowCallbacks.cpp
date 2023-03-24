@@ -213,10 +213,7 @@ void ListBox::addStrings()
         g_object_set_data(G_OBJECT(labelInList), "index", GINT_TO_POINTER(localIndex));
         g_signal_connect(labelInList, "query-tooltip", G_CALLBACK(onRowMouseEnter), NULL);
 
-        gtk_label_set_wrap(GTK_LABEL(labelInList), TRUE);
-        gtk_label_set_max_width_chars(GTK_LABEL(labelInList), 1);
         gtk_label_set_ellipsize(GTK_LABEL(labelInList), PANGO_ELLIPSIZE_START);
-        gtk_widget_set_hexpand(labelInList, TRUE);
         gtk_widget_set_halign(labelInList, GTK_ALIGN_FILL);
         gtk_list_box_insert(GTK_LIST_BOX(this->listBox), labelInList, -1);
         localIndex++;
