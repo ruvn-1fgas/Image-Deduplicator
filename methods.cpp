@@ -125,7 +125,7 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
         hashes[i] = img.pHash();
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)images.size());
 
-        std::string hashCalc = settings::language == 1 ? language::dict["ru"]["mainWindow.StartButton.HashCalc"] : language::dict["en"]["mainWindow.StartButton.HashCalc"];
+        std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
         char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
         gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
         while (g_main_context_pending(NULL))
@@ -154,7 +154,7 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
         }
 
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)hashes.size());
-        std::string imgComp = settings::language == 1 ? language::dict["ru"]["mainWindow.StartButton.ImageCompare"] : language::dict["en"]["mainWindow.StartButton.ImageCompare"];
+        std::string imgComp = language::dict["StartButton.ImageCompareAction"][settings::language];
         char *text = g_strdup_printf((imgComp + "%d%%").c_str(), (int)(i / (double)hashes.size() * 100));
         gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
         while (g_main_context_pending(NULL))

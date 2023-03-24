@@ -4,51 +4,159 @@
 namespace language
 {
     /*
-    <language> = {
-        <key> = <value>
-    }
+        <key> = {
+            <language> => <value>
+            language is int
+        }
     */
 
-    std::map<std::string, std::map<std::string, std::string>> dict = {
-        {"en", {{"mainWindow.OpenDirButton", "Open directory"}, {"mainWindow.DirLabel", "Selected directory - "}, {"mainWindow.ExcludeDirButton", "Exclude directory"}, {"mainWindow.ExcludeDirLabel", "Excluded directories - "}, {"mainWindow.StartButton", "Start"}, {"mainWindow.StartButton.Error.NotChosenDir", "Select Directory"}, {"mainWindow.StartButton.Error.DirectoryNotExists", "Directory not exists"}, {"mainWindow.StartButton.Result.NoDuplicates", "Duplicates not found"}, {"mainWindow.StartButton.HashCalc", "Hash calculation - "}, {"mainWindow.StartButton.ImageCompare", "Image comparison - "}, {"mainWindow.OpenDialog.TitleBar", "Select Directory"}, {"mainWindow.OpenDialog.Cancel", "_Cancel"}, {"mainWindow.OpenDialog.Accept", "_Accept"}, {"mainWindow.OpenDialog.Selected.Text", "Selected directory - "}, {"mainWindow.ExcludeDialog.TitleBar", "Select Directory"}, {"mainWindow.ExcludeDialog.Cancel", "_Cancel"}, {"mainWindow.ExcludeDialog.Accept", "_Select Directory"}, {"mainWindow.ExcludeDialog.Error.NotChosenDir", "First select directory"}, {"mainWindow.ExcludeDialog.Error.DirectoryIsSubDir", "Selected directory is subdirectory of excluded directory"}, {"mainWindow.ExcludeDialog.Error.DirectoryAlreadyExcluded", "Directory already excluded"}, {"mainWindow.ExcludeDialog.Error.DirectoryIsNotSubDir", "Selected directory is not subdirectory of current directory"}, {"mainWindow.ExcludeDialog.Selected.Text", "Excluded directories - "}, {"mainWindow.SettingsDialog.TitleBar", "Settings"}, {"mainWindow.SettingsDialog.Cancel", "Cancel"}, {"mainWindow.SettingsDialog.Apply", "Apply"}, {"mainWindow.SettingsDialog.RecursiveLabel", "Recursive search"}, {"mainWindow.SettingsDialog.HashThresholdLabel", "Hash threshold"}, {"mainWindow.SettingsDialog.ThemeLabel", "App theme"}, {"mainWindow.SettingsDialog.ThemeLight", "Light"}, {"mainWindow.SettingsDialog.ThemeDark", "Dark"}, {"mainWindow.SettingsDialog.Language", "Language"}, {"duplWindow.Title", "Duplicates"}, {"duplWindow.PrevButton", "Previous"}, {"duplWindow.NextButton", "Next"}, {"duplWindow.ListBox.Label", "List "}, {"duplWindow.ListBox.RightClick.Open", "Open"}, {"duplWindow.ListBox.RightClick.Delete", "Delete"}, {"duplWindow.ListBox.OpenFile.Error.FileNotFound", "Image not found"}}},
-        {"ru", {
-                   {"mainWindow.OpenDirButton", "Выбрать директорию"},
-                   {"mainWindow.DirLabel", "Текущая директория - "},
-                   {"mainWindow.ExcludeDirButton", "Исключить директорию"},
-                   {"mainWindow.ExcludeDirLabel", "Исключенные директории - "},
-                   {"mainWindow.StartButton", "Начать"},
-                   {"mainWindow.StartButton.Error.NotChosenDir", "Выберите директорию"},
-                   {"mainWindow.StartButton.Error.DirectoryNotExists", "Директория не существует"},
-                   {"mainWindow.StartButton.Result.NoDuplicates", "Дубликатов не найдено"},
-                   {"mainWindow.StartButton.HashCalc", "Вычисление хеша - "},
-                   {"mainWindow.StartButton.ImageCompare", "Сравнение изображений - "},
-                   {"mainWindow.OpenDialog.TitleBar", "Выберите директорию"},
-                   {"mainWindow.OpenDialog.Cancel", "_Отмена"},
-                   {"mainWindow.OpenDialog.Accept", "_Выбрать"},
-                   {"mainWindow.OpenDialog.Selected.Text", "Текущая директория - "},
-                   {"mainWindow.ExcludeDialog.TitleBar", "Выберите директорию"},
-                   {"mainWindow.ExcludeDialog.Cancel", "_Отмена"},
-                   {"mainWindow.ExcludeDialog.Accept", "_Выбрать"},
-                   {"mainWindow.ExcludeDialog.Error.NotChosenDir", "Сначала выберите директорию"},
-                   {"mainWindow.ExcludeDialog.Error.DirectoryIsSubDir", "Выбранная директория является поддиректорией исключенной директории"},
-                   {"mainWindow.ExcludeDialog.Error.DirectoryAlreadyExcluded", "Директория уже добавлена в список исключений "},
-                   {"mainWindow.ExcludeDialog.Error.DirectoryIsNotSubDir", "Выбранная директория не является поддиректорией текущей директории"},
-                   {"mainWindow.ExcludeDialog.Selected.Text", "Исключенные директории - "},
-                   {"mainWindow.SettingsDialog.TitleBar", "Настройки"},
-                   {"mainWindow.SettingsDialog.Cancel", "Отмена"},
-                   {"mainWindow.SettingsDialog.Apply", "Применить"},
-                   {"mainWindow.SettingsDialog.RecursiveLabel", "Рекурсивный поиск"},
-                   {"mainWindow.SettingsDialog.HashThresholdLabel", "Порог схожести"},
-                   {"mainWindow.SettingsDialog.ThemeLabel", "Тема приложения"},
-                   {"mainWindow.SettingsDialog.ThemeLight", "Светлая"},
-                   {"mainWindow.SettingsDialog.ThemeDark", "Темная"},
-                   {"mainWindow.SettingsDialog.Language", "Язык приложения"},
-                   {"duplWindow.Title", "Дубликаты"},
-                   {"duplWindow.PrevButton", "Назад"},
-                   {"duplWindow.NextButton", "Вперед"},
-                   {"duplWindow.ListBox.Label", "Список "},
-                   {"duplWindow.ListBox.RightClick.Open", "Открыть"},
-                   {"duplWindow.ListBox.RightClick.Delete", "Удалить"},
-                   {"duplWindow.ListBox.OpenFile.Error.FileNotFound", "Изображение не найдено"},
-               }}}; // languages
+    std::map<std::string, std::map<int, std::string>> dict = {
+        {"OpenDirButtonLabel", {
+            {0, "Open directory"},
+            {1, "Выбрать директорию"},
+        }},
+        {"SelectedDirectoryLabel", {
+            {0, "Selected directory - "},
+            {1, "Текущая директория - "},
+        }},
+        {"ExcludeDirButtonLabel", {
+            {0, "Exclude directory"},
+            {1, "Исключить директорию"},
+        }},
+        {"ExcludeDirLabel", {
+            {0, "Excluded directories - "},
+            {1, "Исключенные директории - "},
+        }},
+        {"StartButtonLabel", {
+            {0, "Start"},
+            {1, "Начать"},
+        }},
+        {"StartButton.Error.DirectorNotChosen", {
+            {0, "Select Directory"},
+            {1, "Выберите директорию"},
+        }},
+        {"StartButton.Error.DirectoryNotExists", {
+            {0, "Directory not exists"},
+            {1, "Выбранная директория не существует"},
+        }},
+        {"StartButton.Result.NoDuplicates", {
+            {0, "Duplicates not found"},
+            {1, "Дубликатов не найдено"},
+        }},
+        {"StartButton.HashCalcAction", {
+            {0, "Hash calculation - "},
+            {1, "Вычисление хеша - "},
+        }},
+        {"StartButton.ImageCompareAction", {
+            {0, "Image comparison - "},
+            {1, "Сравнение изображений - "},
+        }},
+        {"OpenDialog.TitleBar", {
+            {0, "Select Directory"},
+            {1, "Выберите директорию"},
+        }},
+        {"Dialog.CancelOption", {
+            {0, "Cancel"},
+            {1, "Отмена" },
+        }},
+        {"Dialog.AcceptOption", {
+            {0, "Accept"},
+            {1, "Выбрать"},
+        }},
+        {"Dialog.OpenOption",{
+            {0, "Select Directory"},
+            {1, "Выбрать"},
+        }},
+        {"Dialog.ApplyOption", {
+            {0, "Apply"},
+            {1, "Применить"},
+        }},
+        {"OpenDialog.Selected.Text", {
+            {0, "Selected directory - "},
+            {1, "Текущая директория - "},
+        }},
+        {"ExcludeDialog.TitleBar", {
+            {0, "Select Directory"},
+            {1, "Выберите директорию"},
+        }},
+        {"ExcludeDialog.Error.DirectoryNotChosen", {
+            {0, "First select directory"},
+            {1, "Сначала выберите директорию"},
+        }},
+        {"ExcludeDialog.Error.DirectoryIsSubDir", {
+            {0, "Selected directory is subdirectory of excluded directory"},
+            {1, "Выбранная директория является поддиректорией исключенной директории"},
+        }},
+        {"ExcludeDialog.Error.DirectoryIsAlreadyExcluded", {
+            {0, "Directory already excluded"},
+            {1, "Выбранная директория уже добавлена в список исключений"},
+        }},
+        {"ExcludeDialog.Error.DirectoryIsNotSubDir", {
+            {0, "Selected directory is not subdirectory of current directory"},
+            {1, "Выбранная директория не является поддиректорией текущей директории"},
+        }},
+        {"ExcludedDirectories.Label", {
+            {0, "Excluded directories - "},
+            {1, "Исключенные директории - "},
+        }},
+        {"SettingsDialog.TitleBar", {
+            {0, "Settings"},
+            {1, "Настройки"},
+        }},
+        {"SettingsDialog.RecursiveLabel", {
+            {0, "Recursive search"},
+            {1, "Рекурсивный поиск"},
+        }},
+        {"SettingsDialog.HashThresholdLabel", {
+            {0, "Hash threshold"},
+            {1, "Порог схожести"},
+        }},
+        {"SettingsDialog.ThemeLabel", {
+            {0, "App theme"},
+            {1, "Тема приложения"},
+        }},
+        {"SettingsDialog.ThemeLight", {
+            {0, "Light"},
+            {1, "Светлая"},
+        }},
+        {"SettingsDialog.ThemeDark", {
+            {0, "Dark"},
+            {1, "Темная"},
+        }},
+        {"SettingsDialog.Language", {
+            {0, "Language"},
+            {1, "Язык приложения"},
+        }},
+        {"duplWindow.TitleBar", {
+            {0, "Duplicates"},
+            {1, "Дубликаты"},
+        }},
+        {"duplWindow.PrevButton", {
+            {0, "Previous"},
+            {1, "Назад"},
+        }},
+        {"duplWindow.NextButton", {
+            {0, "Next"},
+            {1, "Вперед"},
+        }},
+        {"duplWindow.ListBox.Label", {
+            {0, "List "},
+            {1, "Список "},
+        }},
+        {"duplWindow.ListBox.RightClick.Open", {
+            {0, "Open"},
+            {1, "Открыть"},
+        }},
+        {"duplWindow.ListBox.RightClick.Delete", {
+            {0, "Delete"},
+            {1, "Удалить"},
+        }},
+        {"duplWindow.ListBox.OpenFile.Error.FileNotFound", {
+            {0, "Image not found"},
+            {1, "Изображение не найдено"},
+        }},
+    };
+    
+    // getting value from dict
+    // language::dict["OpenDirButton"][0] - returns "Open directory"
 };

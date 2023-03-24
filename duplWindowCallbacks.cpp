@@ -17,7 +17,7 @@ void onRowActivated(GtkListBox *listBox, GtkListBoxRow *row, gpointer data)
 
     if (!std::filesystem::exists(global::currentItems.at(index)))
     {
-        std::string errorDialogText = settings::language == 1 ? language::dict["ru"]["duplWindow.ListBox.OpenFile.Error.FileNotFound"] : language::dict["en"]["duplWindow.ListBox.OpenFile.Error.FileNotFound"];
+        std::string errorDialogText = language::dict["duplWindow.ListBox.OpenFile.Error.FileNotFound"][settings::language];
         GtkWidget *errorDialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, errorDialogText.c_str());
         gtk_window_set_transient_for(GTK_WINDOW(errorDialog), NULL);
         gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
@@ -159,8 +159,8 @@ void onRightClick(GtkGesture *gesture, gint n_press, gdouble x, gdouble y, gpoin
 
     GtkWidget *menu;
     GtkWidget *grid = gtk_grid_new();
-    std::string openButtonText = settings::language == 1 ? language::dict["ru"]["duplWindow.ListBox.RightClick.Open"] : language::dict["en"]["duplWindow.ListBox.RightClick.Open"];
-    std::string deleteButtonText = settings::language == 1 ? language::dict["ru"]["duplWindow.ListBox.RightClick.Delete"] : language::dict["en"]["duplWindow.ListBox.RightClick.Delete"];
+    std::string openButtonText = language::dict["duplWindow.ListBox.RightClick.Open"][settings::language];
+    std::string deleteButtonText = language::dict["duplWindow.ListBox.RightClick.Delete"][settings::language];
     GtkWidget *openAll = gtk_button_new_with_label(openButtonText.c_str());
     GtkWidget *deleteAll = gtk_button_new_with_label(deleteButtonText.c_str());
 
@@ -188,7 +188,7 @@ void onRightClick(GtkGesture *gesture, gint n_press, gdouble x, gdouble y, gpoin
 
 void ListBox::setLabelText(int index)
 {
-    std::string labelTextLoc = settings::language == 1 ? language::dict["ru"]["duplWindow.ListBox.Label"] : language::dict["en"]["duplWindow.ListBox.Label"];
+    std::string labelTextLoc = language::dict["duplWindow.ListBox.Label"][settings::language];
     std::string labelText = labelTextLoc + std::to_string(index);
 
     gtk_label_set_text(GTK_LABEL(label), labelText.c_str());

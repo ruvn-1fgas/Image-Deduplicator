@@ -14,7 +14,7 @@ namespace settings
     std::vector<std::wstring> excludeList;
     int threshold;
     bool appTheme;
-    bool language;
+    int language;
 
     GtkWidget *mainGrid;
     GtkWidget *window;
@@ -71,13 +71,13 @@ namespace settings
 
         // ====== OPEN DIR BUTTON SETUP ======
 
-        std::string openDirButtonText = settings::language == 1 ? language::dict["ru"]["mainWindow.OpenDirButton"] : language::dict["en"]["mainWindow.OpenDirButton"];
+        std::string openDirButtonText = language::dict["OpenDirButtonLabel"][settings::language];
         GtkWidget *openDirButton = gtk_button_new_with_label(openDirButtonText.c_str());
         gtk_grid_attach(GTK_GRID(mainGrid), openDirButton, 0, 0, 2, 1);
 
         // ======= LABEL SETUP =======
 
-        std::string dirLabelText = settings::language == 1 ? language::dict["ru"]["mainWindow.DirLabel"] : language::dict["en"]["mainWindow.DirLabel"];
+        std::string dirLabelText = language::dict["SelectedDirectoryLabel"][settings::language];
         GtkWidget *dirLabel = gtk_label_new(dirLabelText.c_str());
 
         gtk_label_set_wrap(GTK_LABEL(dirLabel), TRUE);
@@ -91,11 +91,11 @@ namespace settings
         if (settings::recursive)
         {
             gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 2, 2, 1);
-            std::string excludeDirButtonText = settings::language == 1 ? language::dict["ru"]["mainWindow.ExcludeDirButton"] : language::dict["en"]["mainWindow.ExcludeDirButton"];
+            std::string excludeDirButtonText = language::dict["ExcludeDirButtonLabel"][settings::language];
             excludeDirButton = gtk_button_new_with_label(excludeDirButtonText.c_str());
             gtk_grid_attach(GTK_GRID(mainGrid), excludeDirButton, 0, 3, 2, 1);
 
-            std::string excludeDirLabelText = settings::language == 1 ? language::dict["ru"]["mainWindow.ExcludeDirLabel"] : language::dict["en"]["mainWindow.ExcludeDirLabel"];
+            std::string excludeDirLabelText = language::dict["ExcludeDirLabel"][settings::language];
             GtkWidget *excludeDirLabel = gtk_label_new(excludeDirLabelText.c_str());
 
             gtk_label_set_wrap(GTK_LABEL(excludeDirLabel), TRUE);
@@ -116,7 +116,7 @@ namespace settings
 
         // ====== START BUTTON SETUP ======
 
-        std::string startButtonText = settings::language == 1 ? language::dict["ru"]["mainWindow.StartButton"] : language::dict["en"]["mainWindow.StartButton"];
+        std::string startButtonText = language::dict["StartButtonLabel"][settings::language];
         GtkWidget *startButton = gtk_button_new_with_label(startButtonText.c_str());
         gtk_widget_set_size_request(startButton, 300, 30);
         gtk_grid_attach(GTK_GRID(mainGrid), startButton, 0, 6, 2, 1);
@@ -150,11 +150,11 @@ namespace settings
             gtk_grid_insert_row(GTK_GRID(mainGrid), 4);
 
             gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 2, 2, 1);
-            std::string excludeDirButtonText = settings::language == 1 ? language::dict["ru"]["mainWindow.ExcludeDirButton"] : language::dict["en"]["mainWindow.ExcludeDirButton"];
+            std::string excludeDirButtonText = language::dict["ExcludeDirButtonLabel"][settings::language];
             GtkWidget *excludeDirButton = gtk_button_new_with_label(excludeDirButtonText.c_str());
             gtk_grid_attach(GTK_GRID(mainGrid), excludeDirButton, 0, 3, 2, 1);
 
-            std::string excludeDirLabelText = settings::language == 1 ? language::dict["ru"]["mainWindow.ExcludeDirLabel"] : language::dict["en"]["mainWindow.ExcludeDirLabel"];
+            std::string excludeDirLabelText = language::dict["ExcludeDirLabel"][settings::language];
             GtkWidget *excludeDirLabel = gtk_label_new(excludeDirLabelText.c_str());
 
             gtk_label_set_wrap(GTK_LABEL(excludeDirLabel), TRUE);
@@ -172,7 +172,7 @@ namespace settings
         }
     }
 
-    void saveSettings(bool rec, int thr, bool theme, bool lang)
+    void saveSettings(bool rec, int thr, bool theme, int lang)
     {
         if (!std::filesystem::exists("settings.ini"))
         {
@@ -191,12 +191,12 @@ namespace settings
         if (lang != language)
         {
             settingsArr[4] += lang == 1 ? "ru" : "en";
-            language = lang == 1 ? true : false;
+            language = lang;
             isLangChanged = true;
         }
         else
         {
-            settingsArr[4] += language ? "ru" : "en";
+            settingsArr[4] += language == 1 ? "ru" : "en";
         }
         if (rec != recursive)
         {
@@ -297,7 +297,13 @@ namespace settings
             else if (line.find("Language") != std::string::npos)
             {
                 std::string value = line.substr(line.find('=') + 2);
-                language = value == "en" ? false : true;
+
+                if (value == "en")
+                    language = 0;
+                else if (value == "ru")
+                    language = 1;
+                else
+                    language = 0;
             }
         }
     }

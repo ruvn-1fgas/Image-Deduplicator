@@ -50,18 +50,18 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     // ====== OPEN DIR BUTTON SETUP ======
 
-    std::string openDirButtonText = settings::language == 1 ? language::dict["ru"]["mainWindow.OpenDirButton"] : language::dict["en"]["mainWindow.OpenDirButton"];
+    std::string openDirButtonText = language::dict["OpenDirButtonLabel"][settings::language];
     GtkWidget *openDirButton = gtk_button_new_with_label(openDirButtonText.c_str());
     gtk_grid_attach(GTK_GRID(mainGrid), openDirButton, 0, 0, 2, 1);
 
     // ======= LABEL SETUP =======
 
-    std::string dirLabelText = settings::language == 1 ? language::dict["ru"]["mainWindow.DirLabel"] : language::dict["en"]["mainWindow.DirLabel"];
+    std::string dirLabelText = language::dict["SelectedDirectoryLabel"][settings::language];
     GtkWidget *dirLabel = gtk_label_new(dirLabelText.c_str());
 
     gtk_label_set_wrap(GTK_LABEL(dirLabel), TRUE);
     gtk_label_set_max_width_chars(GTK_LABEL(dirLabel), 1);
-    gtk_label_set_ellipsize(GTK_LABEL(dirLabel), PANGO_ELLIPSIZE_END);
+    gtk_label_set_ellipsize(GTK_LABEL(dirLabel), PANGO_ELLIPSIZE_MIDDLE);
     gtk_widget_set_hexpand(dirLabel, TRUE);
     gtk_widget_set_halign(dirLabel, GTK_ALIGN_START);
 
@@ -70,16 +70,16 @@ static void activate(GtkApplication *app, gpointer user_data)
     if (settings::recursive)
     {
         gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 2, 2, 1);
-        std::string excludeDirButtonText = settings::language == 1 ? language::dict["ru"]["mainWindow.ExcludeDirButton"] : language::dict["en"]["mainWindow.ExcludeDirButton"];
+        std::string excludeDirButtonText = language::dict["ExcludeDirButtonLabel"][settings::language];
         excludeDirButton = gtk_button_new_with_label(excludeDirButtonText.c_str());
         gtk_grid_attach(GTK_GRID(mainGrid), excludeDirButton, 0, 3, 2, 1);
 
-        std::string excludeDirLabelText = settings::language == 1 ? language::dict["ru"]["mainWindow.ExcludeDirLabel"] : language::dict["en"]["mainWindow.ExcludeDirLabel"];
+        std::string excludeDirLabelText = language::dict["ExcludeDirLabel"][settings::language];
         GtkWidget *excludeDirLabel = gtk_label_new(excludeDirLabelText.c_str());
 
         gtk_label_set_wrap(GTK_LABEL(excludeDirLabel), TRUE);
         gtk_label_set_max_width_chars(GTK_LABEL(excludeDirLabel), 1);
-        gtk_label_set_ellipsize(GTK_LABEL(excludeDirLabel), PANGO_ELLIPSIZE_END);
+        gtk_label_set_ellipsize(GTK_LABEL(excludeDirLabel), PANGO_ELLIPSIZE_MIDDLE);
         gtk_widget_set_hexpand(excludeDirLabel, TRUE);
         gtk_widget_set_halign(excludeDirLabel, GTK_ALIGN_START);
 
@@ -95,7 +95,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     // ====== START BUTTON SETUP ======
 
-    std::string startButtonText = settings::language == 1 ? language::dict["ru"]["mainWindow.StartButton"] : language::dict["en"]["mainWindow.StartButton"];
+    std::string startButtonText = language::dict["StartButtonLabel"][settings::language];
     GtkWidget *startButton = gtk_button_new_with_label(startButtonText.c_str());
     gtk_widget_set_size_request(startButton, 300, 30);
     gtk_grid_attach(GTK_GRID(mainGrid), startButton, 0, 6, 2, 1);
