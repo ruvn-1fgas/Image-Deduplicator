@@ -82,7 +82,7 @@ namespace settings
 
         gtk_label_set_wrap(GTK_LABEL(dirLabel), TRUE);
         gtk_label_set_max_width_chars(GTK_LABEL(dirLabel), 1);
-        gtk_label_set_ellipsize(GTK_LABEL(dirLabel), PANGO_ELLIPSIZE_END);
+        gtk_label_set_ellipsize(GTK_LABEL(dirLabel), PANGO_ELLIPSIZE_MIDDLE);
         gtk_widget_set_hexpand(dirLabel, TRUE);
         gtk_widget_set_halign(dirLabel, GTK_ALIGN_START);
 

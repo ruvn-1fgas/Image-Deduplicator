@@ -79,7 +79,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 
         gtk_label_set_wrap(GTK_LABEL(excludeDirLabel), TRUE);
         gtk_label_set_max_width_chars(GTK_LABEL(excludeDirLabel), 1);
-        gtk_label_set_ellipsize(GTK_LABEL(excludeDirLabel), PANGO_ELLIPSIZE_MIDDLE);
+        gtk_label_set_ellipsize(GTK_LABEL(excludeDirLabel), PANGO_ELLIPSIZE_END);
         gtk_widget_set_hexpand(excludeDirLabel, TRUE);
         gtk_widget_set_halign(excludeDirLabel, GTK_ALIGN_START);
 
