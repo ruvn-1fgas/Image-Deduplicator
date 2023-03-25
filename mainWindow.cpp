@@ -59,10 +59,10 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_widget_set_halign(dirLabel, GTK_ALIGN_START);
 
     gtk_grid_attach(GTK_GRID(mainGrid), dirLabel, 0, 1, 2, 1);
+    gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 2, 2, 1);
 
     if (settings::recursive)
     {
-        gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 2, 2, 1);
         std::string excludeDirButtonText = language::dict["ExcludeDirButtonLabel"][settings::language];
         excludeDirButton = gtk_button_new_with_label(excludeDirButtonText.c_str());
         gtk_grid_attach(GTK_GRID(mainGrid), excludeDirButton, 0, 3, 2, 1);
