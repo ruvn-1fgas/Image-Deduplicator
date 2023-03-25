@@ -22,7 +22,6 @@ namespace settings
     GtkWidget *listOfExcluded;
 
     void (*settingsButtonClicked)(GtkWidget *, gpointer);
-    void (*infoButtonClicked)(GtkWidget *, gpointer);
     void (*excludeDirButtonClicked)(GtkWidget *, gpointer);
     void (*openDirButtonClicked)(GtkWidget *, gpointer);
     void (*startButtonClicked)(GtkWidget *, gpointer);
@@ -60,13 +59,6 @@ namespace settings
         g_signal_connect(settingsButton, "clicked", G_CALLBACK(settingsButtonClicked), NULL);
 
         gtk_header_bar_pack_end(headerBar, settingsButton);
-
-        GtkWidget *infoButton = gtk_button_new_from_icon_name("help-about");
-
-        g_object_set_data(G_OBJECT(infoButton), "window", window);
-        // g_signal_connect(infoButton, "clicked", G_CALLBACK(infoButtonButton_clicked), NULL);
-
-        gtk_header_bar_pack_end(headerBar, infoButton);
 
         gtk_window_set_titlebar(GTK_WINDOW(window), GTK_WIDGET(headerBar));
 

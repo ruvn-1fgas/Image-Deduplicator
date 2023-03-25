@@ -39,13 +39,6 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     gtk_header_bar_pack_end(headerBar, settingsButton);
 
-    GtkWidget *infoButton = gtk_button_new_from_icon_name("help-about");
-
-    g_object_set_data(G_OBJECT(infoButton), "window", window);
-    // g_signal_connect(infoButton, "clicked", G_CALLBACK(infoButtonButton_clicked), NULL);
-
-    gtk_header_bar_pack_end(headerBar, infoButton);
-
     gtk_window_set_titlebar(GTK_WINDOW(window), GTK_WIDGET(headerBar));
 
     // ====== OPEN DIR BUTTON SETUP ======
@@ -120,7 +113,6 @@ static void activate(GtkApplication *app, gpointer user_data)
     // ======= SETTINGS SETUP =======
 
     settings::settingsButtonClicked = settingsButton_clicked;
-    // settings::infoButtonClicked = infoButton_clicked;
     settings::excludeDirButtonClicked = excludeDirButton_clicked;
     settings::openDirButtonClicked = openDirButton_clicked;
     settings::startButtonClicked = startButton_clicked;
