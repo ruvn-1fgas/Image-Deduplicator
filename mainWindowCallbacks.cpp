@@ -1,5 +1,6 @@
 #include "duplWindow.cpp"
 #include <algorithm>
+#include <iostream>
 
 void createNewWindow(GtkWindow *window, std::wstring directoryPath, std::vector<std::vector<std::wstring>> duplicates);
 
@@ -234,7 +235,7 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
         {
             std::string errorDialogText = language::dict["ExcludeDialog.Error.DirectoryIsAlreadyExcluded"][settings::language];
             GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, errorDialogText.c_str());
-            
+
             gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
             gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
             gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
@@ -263,7 +264,7 @@ static void fileChoserExclude(GtkDialog *dialog, int response)
         {
             std::string errorDialogText = language::dict["ExcludeDialog.Error.DirectoryIsSubDir"][settings::language];
             GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, errorDialogText.c_str());
-            
+
             gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
             gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
             gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
@@ -339,7 +340,7 @@ static void excludeDirButton_clicked(GtkWidget *widget, gpointer data)
     {
         std::string errorDialogText = language::dict["ExcludeDialog.Error.DirectoryNotChosen"][settings::language];
         GtkWidget *errorDialog = gtk_message_dialog_new(window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, errorDialogText.c_str());
-        
+
         gtk_window_set_transient_for(GTK_WINDOW(errorDialog), window);
         gtk_window_set_modal(GTK_WINDOW(errorDialog), TRUE);
         gtk_window_set_destroy_with_parent(GTK_WINDOW(errorDialog), TRUE);
@@ -461,7 +462,13 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
 
     gtk_widget_set_sensitive(widget, FALSE);
 
-    std::vector<std::vector<std::wstring>> duplicates = compareImages(directoryPath, progressBar);
+    std::cout << "Threaded ? (y/n) : ";
+    std::string threaded;
+    std::cin >> threaded;
+    isThreaded = threaded == "y";
+
+    std::vector<std::vector<std::wstring>>
+        duplicates = compareImages(directoryPath, progressBar);
 
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), 0.0);
     gtk_grid_remove_row(GTK_GRID(data), 8);

@@ -2,6 +2,9 @@
 #include <filesystem>
 #include "imageLib/image.cpp"
 #include "structures/settings.cpp"
+#include <thread>
+#include <atomic>
+#include <chrono>
 
 std::string UTF16toUTF8(std::wstring wString)
 {
@@ -109,8 +112,11 @@ Image getImage(std::wstring path)
     }
 }
 
+bool isThreaded = false;
+
 bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2)
 {
+
     int count = 0;
     for (int i = 0; i < hash1.size(); i++)
         if (hash1[i] == hash2[i])
@@ -125,46 +131,172 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
     std::vector<bool> visited(images.size(), false);
     std::vector<std::vector<bool>> hashes(images.size());
 
-    for (int i = 0; i < images.size(); i++)
-    {
-        Image img = getImage(images[i]);
-        hashes[i] = img.pHash();
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)images.size());
+    auto start = std::chrono::high_resolution_clock::now();
 
-        std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
-        char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
-        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
-        while (g_main_context_pending(NULL))
-            g_main_context_iteration(NULL, FALSE);
-    }
-
-    for (int i = 0; i < hashes.size(); i++)
+    if (isThreaded)
     {
-        if (visited[i])
-            continue;
-        for (int j = i + 1; j < hashes.size(); j++)
+        std::vector<std::thread> threads;
+        std::atomic<int> i = 0;
+        for (int j = 0; j < std::thread::hardware_concurrency(); j++)
         {
-            if (visited[j])
-                continue;
-            if (compareHash(hashes[i], hashes[j]))
-            {
-                pair p;
-                p.first = images[i];
-                p.second = images[j];
-                duplicates.push_back(p);
+            threads.push_back(std::thread([&]()
+                                          {
+                while (i < images.size())
+                {
+                    int index = i++;
+                    if (index >= images.size() || i >= images.size())
+                        break;
 
-                visited[j] = true;
-            }
+                    Image img = getImage(images[index]);
+                    hashes[index] = img.pHash();
+                } }));
+        }
+
+        while (i < images.size())
+        {
+            for (auto &t : threads)
+                if (t.joinable())
+                    t.join();
+
+            if (i >= images.size())
+                break;
+
+            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)images.size());
+
+            std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
+            char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
+            gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
             while (g_main_context_pending(NULL))
                 g_main_context_iteration(NULL, FALSE);
         }
 
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)hashes.size());
-        std::string imgComp = language::dict["StartButton.ImageCompareAction"][settings::language];
-        char *text = g_strdup_printf((imgComp + "%d%%").c_str(), (int)(i / (double)hashes.size() * 100));
-        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
-        while (g_main_context_pending(NULL))
-            g_main_context_iteration(NULL, FALSE);
+        for (auto &t : threads)
+            if (t.joinable())
+                t.join();
+        threads.clear();
+    }
+    else
+        for (int i = 0; i < images.size(); i++)
+        {
+            Image img = getImage(images[i]);
+            hashes[i] = img.pHash();
+            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)images.size());
+
+            std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
+            char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
+            gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
+            while (g_main_context_pending(NULL))
+                g_main_context_iteration(NULL, FALSE);
+        }
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    if (isThreaded)
+    {
+        std::cout << "Hash Calc - Threaded version: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+    }
+    else
+    {
+        std::cout << "Hash Calc - Non-threaded version: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+    }
+
+    start = std::chrono::high_resolution_clock::now();
+
+    if (isThreaded)
+    {
+        std::vector<std::thread> threads;
+        std::atomic<int> i = 0;
+        for (int j = 0; j < std::thread::hardware_concurrency(); j++)
+        {
+            threads.push_back(std::thread([&]()
+                                          {
+                while (i < hashes.size())
+                {
+                    int index = i++;
+                    if(index >= hashes.size() || i >= hashes.size())
+                        break;
+                    
+                    if (visited[index])
+                        continue;
+                    for (int j = index + 1; j < hashes.size(); j++)
+                    {
+                        if (visited[j])
+                            continue;
+                        if (compareHash(hashes[index], hashes[j]))
+                        {
+                            pair p;
+                            p.first = images[index];
+                            p.second = images[j];
+                            duplicates.push_back(p);
+
+                            visited[j] = true;
+                        }
+                    }
+                } }));
+        }
+
+        while (i < hashes.size())
+        {
+            for (auto &t : threads)
+                if (t.joinable())
+                    t.join();
+
+            if (i >= hashes.size())
+                break;
+
+            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)hashes.size());
+            std::string imgComp = language::dict["StartButton.ImageCompareAction"][settings::language];
+            char *text = g_strdup_printf((imgComp + "%d%%").c_str(), (int)(i / (double)hashes.size() * 100));
+            gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
+            while (g_main_context_pending(NULL))
+                g_main_context_iteration(NULL, FALSE);
+        }
+
+        for (auto &t : threads)
+            if (t.joinable())
+                t.join();
+
+        threads.clear();
+    }
+    else
+        for (int i = 0; i < hashes.size(); i++)
+        {
+            if (visited[i])
+                continue;
+            for (int j = i + 1; j < hashes.size(); j++)
+            {
+                if (visited[j])
+                    continue;
+                if (compareHash(hashes[i], hashes[j]))
+                {
+                    pair p;
+                    p.first = images[i];
+                    p.second = images[j];
+                    duplicates.push_back(p);
+
+                    visited[j] = true;
+                }
+                while (g_main_context_pending(NULL))
+                    g_main_context_iteration(NULL, FALSE);
+            }
+
+            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), i / (double)hashes.size());
+            std::string imgComp = language::dict["StartButton.ImageCompareAction"][settings::language];
+            char *text = g_strdup_printf((imgComp + "%d%%").c_str(), (int)(i / (double)hashes.size() * 100));
+            gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progressBar), text);
+            while (g_main_context_pending(NULL))
+                g_main_context_iteration(NULL, FALSE);
+        }
+
+    end = std::chrono::high_resolution_clock::now();
+
+    if (isThreaded)
+    {
+        std::cout << "Image Compare - Threaded version: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+    }
+    else
+    {
+        std::cout << "Image Compare - Non-threaded version: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
     }
 
     for (auto hash : hashes)
