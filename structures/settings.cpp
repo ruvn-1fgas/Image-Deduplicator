@@ -41,9 +41,12 @@ namespace settings
 
     void changeLanguage()
     {
-        while (gtk_grid_get_child_at(GTK_GRID(mainGrid), 0, 0) != NULL)
+        GtkWidget *iter = gtk_widget_get_first_child(mainGrid);
+        while (iter != NULL)
         {
-            gtk_grid_remove_row(GTK_GRID(mainGrid), 0);
+            GtkWidget *next = gtk_widget_get_next_sibling(iter);
+            gtk_grid_remove(GTK_GRID(mainGrid), iter);
+            iter = next;
         }
 
         GtkWidget *excludeDirButton;
@@ -80,10 +83,10 @@ namespace settings
         gtk_widget_set_halign(dirLabel, GTK_ALIGN_START);
 
         gtk_grid_attach(GTK_GRID(mainGrid), dirLabel, 0, 1, 2, 1);
+        gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 2, 2, 1);
 
         if (recursive)
         {
-            gtk_grid_attach(GTK_GRID(mainGrid), gtk_label_new(""), 0, 2, 2, 1);
             std::string excludeDirButtonText = language::dict["ExcludeDirButtonLabel"][language];
             excludeDirButton = gtk_button_new_with_label(excludeDirButtonText.c_str());
             gtk_grid_attach(GTK_GRID(mainGrid), excludeDirButton, 0, 3, 2, 1);
@@ -252,7 +255,7 @@ namespace settings
         if (!std::filesystem::exists("settings.ini"))
         {
             std::ofstream file("settings.ini");
-            file << "[settings]\nRecursive = false\nHash_threshold = 80\nApp_theme = default\nLanguage = en";
+            file << "[settings]\nRecursive = false\nHash_threshold = 80\nApp_theme = default\nLanguage = ru";
             file.close();
         }
 
