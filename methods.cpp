@@ -196,7 +196,7 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
 
         std::vector<std::thread> threads;
         std::atomic<size_t> i = 0;
-        for (size_t j = 0; j < std::thread::hardware_concurrency() - 1; j++)
+        for (size_t j = 0; j < std::thread::hardware_concurrency(); j++)
         {
             threads.emplace_back([&]()
                                  {
@@ -246,7 +246,17 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
                 g_main_context_iteration(NULL, FALSE);
         }
 
-        threads.clear();
+        // bool allDone = false;
+
+        // while (!allDone)
+        // {
+        //     allDone = true;
+        //     for (size_t i = 0; i < threads.size(); i++)
+        //         if (threads[i].joinable())
+        //             allDone = false;
+        // }
+
+        // threads.clear();
     }
     else
         for (size_t i = 0; i < hashes.size(); i++)
