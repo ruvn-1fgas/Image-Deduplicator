@@ -1,6 +1,7 @@
 #include "duplWindow.cpp"
 #include <algorithm>
 #include <iostream>
+#include <thread>
 
 void createNewWindow(GtkWindow *window, std::wstring directoryPath, std::vector<std::vector<std::wstring>> duplicates);
 
@@ -12,15 +13,17 @@ void settingsDialogResponse(GtkDialog *dialog, gint responseId, gpointer data)
 
         GtkWidget *recursiveCheckbox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "recursiveCheckbox");
         GtkWidget *hashThresholdSlider = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "hashThresholdSlider");
+        GtkWidget *threadCountSlider = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "threadCountSlider");
         GtkWidget *themeComboBox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "themeComboBox");
         GtkWidget *languageComboBox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "languageComboBox");
 
         bool recursive = gtk_check_button_get_active(GTK_CHECK_BUTTON(recursiveCheckbox));
         int threshold = gtk_range_get_value(GTK_RANGE(hashThresholdSlider));
+        int threadCount = gtk_range_get_value(GTK_RANGE(threadCountSlider));
         bool appTheme = gtk_combo_box_get_active(GTK_COMBO_BOX(themeComboBox)) == 0 ? true : false;
         bool language = gtk_combo_box_get_active(GTK_COMBO_BOX(languageComboBox)) == 0 ? 0 : 1;
 
-        settings::saveSettings(recursive, threshold, appTheme, language);
+        settings::saveSettings(recursive, threshold, threadCount, appTheme, language);
     }
     gtk_window_destroy(GTK_WINDOW(dialog));
 }
@@ -66,6 +69,7 @@ void settingsButton_clicked(GtkWidget *widget, gpointer data)
     gtk_widget_set_halign(hashThresholdLabel, GTK_ALIGN_START);
 
     gtk_grid_attach(GTK_GRID(grid), hashThresholdLabel, 0, 1, 1, 1);
+
     GtkWidget *hashThresholdSlider = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
     gtk_scale_set_value_pos(GTK_SCALE(hashThresholdSlider), GTK_POS_RIGHT);
     gtk_range_set_value(GTK_RANGE(hashThresholdSlider), settings::threshold);
@@ -81,13 +85,37 @@ void settingsButton_clicked(GtkWidget *widget, gpointer data)
 
     gtk_grid_attach(GTK_GRID(grid), hashThresholdSlider, 1, 1, 5, 1);
 
+    // ======= THREAD COUNT SLIDER =======
+
+    std::string threadCountLabelText = language::dict["SettingsDialog.ThreadCount.Text"][settings::language];
+    GtkWidget *threadLabel = gtk_label_new(threadCountLabelText.c_str());
+    gtk_widget_set_halign(threadLabel, GTK_ALIGN_START);
+
+    gtk_grid_attach(GTK_GRID(grid), threadLabel, 0, 2, 1, 1);
+
+    int maxThreadCount = std::thread::hardware_concurrency();
+    GtkWidget *threadCountSlider = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 1, maxThreadCount, 1);
+    if (settings::threadCount > maxThreadCount)
+    {
+        settings::threadCount = maxThreadCount;
+        settings::saveSettings();
+    }
+
+    gtk_range_set_value(GTK_RANGE(threadCountSlider), settings::threadCount);
+    gtk_scale_set_digits(GTK_SCALE(threadCountSlider), 0);
+    gtk_scale_set_draw_value(GTK_SCALE(threadCountSlider), TRUE);
+
+    gtk_widget_set_size_request(threadCountSlider, 200, -1);
+
+    gtk_grid_attach(GTK_GRID(grid), threadCountSlider, 1, 2, 5, 1);
+
     // ======= APP THEME =======
 
     std::string themeLabelText = language::dict["SettingsDialog.ThemeLabel"][settings::language];
     GtkWidget *themeLabel = gtk_label_new(themeLabelText.c_str());
     gtk_widget_set_halign(themeLabel, GTK_ALIGN_START);
 
-    gtk_grid_attach(GTK_GRID(grid), themeLabel, 0, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), themeLabel, 0, 3, 1, 1);
 
     GtkWidget *themeComboBox = gtk_combo_box_text_new();
 
@@ -99,7 +127,7 @@ void settingsButton_clicked(GtkWidget *widget, gpointer data)
     std::string activeID = settings::appTheme ? "light" : "dark";
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(themeComboBox), activeID.c_str());
 
-    gtk_grid_attach(GTK_GRID(grid), themeComboBox, 2, 2, 3, 1);
+    gtk_grid_attach(GTK_GRID(grid), themeComboBox, 2, 3, 3, 1);
 
     // ======= LANGUAGE =======
 
@@ -107,14 +135,14 @@ void settingsButton_clicked(GtkWidget *widget, gpointer data)
     GtkWidget *languageLabel = gtk_label_new(langLabelText.c_str());
     gtk_widget_set_halign(languageLabel, GTK_ALIGN_START);
 
-    gtk_grid_attach(GTK_GRID(grid), languageLabel, 0, 3, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), languageLabel, 0, 4, 1, 1);
 
     GtkWidget *languageComboBox = gtk_combo_box_text_new();
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(languageComboBox), "en", "English");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(languageComboBox), "ru", "Русский");
     int active = settings::language ? 1 : 0;
     gtk_combo_box_set_active(GTK_COMBO_BOX(languageComboBox), active);
-    gtk_grid_attach(GTK_GRID(grid), languageComboBox, 2, 3, 3, 1);
+    gtk_grid_attach(GTK_GRID(grid), languageComboBox, 2, 4, 3, 1);
 
     // ======= DIALOG SETUP =======
 
@@ -462,13 +490,7 @@ static void startButton_clicked(GtkWidget *widget, gpointer data)
 
     gtk_widget_set_sensitive(widget, FALSE);
 
-    std::cout << "Threaded ? (y/n) : ";
-    std::string threaded;
-    std::cin >> threaded;
-    isThreaded = threaded == "y";
-
-    std::vector<std::vector<std::wstring>>
-        duplicates = compareImages(directoryPath, progressBar);
+    std::vector<std::vector<std::wstring>> duplicates = compareImages(directoryPath, progressBar);
 
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressBar), 0.0);
     gtk_grid_remove_row(GTK_GRID(data), 8);

@@ -13,6 +13,7 @@ namespace settings
     bool recursive;
     std::vector<std::wstring> excludeList;
     int threshold;
+    int threadCount;
     bool appTheme;
     int language;
 
@@ -172,17 +173,41 @@ namespace settings
         }
     }
 
-    void saveSettings(bool rec, int thr, bool theme, int lang)
+    void saveSettings()
     {
         if (!std::filesystem::exists("settings.ini"))
         {
             std::ofstream file("settings.ini");
-            file << "[settings]\nRecursive = false\nHash_threshold = 80\nApp_theme = default\nLanguage = en";
+            file << "[settings]\nRecursive = false\nHash_threshold = 80\nThread_count = 1\nApp_theme = default\nLanguage = en";
             file.close();
             return;
         }
 
-        std::vector<std::string> settingsArr = {"[settings]", "Recursive = ", "Hash_threshold = ", "App_theme = ", "Language = "};
+        std::vector<std::string> settingsArr = {"[settings]", "Recursive = ", "Hash_threshold = ", "Thread_count = ", "App_theme = ", "Language = "};
+
+        settingsArr[1] += recursive ? "true" : "false";
+        settingsArr[2] += std::to_string(threshold);
+        settingsArr[3] += std::to_string(threadCount);
+        settingsArr[4] += appTheme == 1 ? "dark" : "default";
+        settingsArr[5] += language == 1 ? "ru" : "en";
+
+        std::ofstream file("settings.ini");
+        for (int i = 0; i < settingsArr.size(); i++)
+            file << settingsArr[i] << std::endl;
+        file.close();
+    }
+
+    void saveSettings(bool rec, int thr, int thrCount, bool theme, int lang)
+    {
+        if (!std::filesystem::exists("settings.ini"))
+        {
+            std::ofstream file("settings.ini");
+            file << "[settings]\nRecursive = false\nHash_threshold = 80\nThread_count = 1\nApp_theme = default\nLanguage = en";
+            file.close();
+            return;
+        }
+
+        std::vector<std::string> settingsArr = {"[settings]", "Recursive = ", "Hash_threshold = ", "Thread_count = ", "App_theme = ", "Language = "};
 
         bool isLangChanged = false;
         bool isRecChanged = false;
@@ -221,6 +246,15 @@ namespace settings
         {
             settingsArr[2] += std::to_string(threshold);
         }
+        if (thrCount != threadCount)
+        {
+            settingsArr[3] += std::to_string(thrCount);
+            threadCount = thrCount;
+        }
+        else
+        {
+            settingsArr[3] += std::to_string(threadCount);
+        }
         if (theme != appTheme)
         {
             settingsArr[3] += theme == 1 ? "light" : "dark";
@@ -255,7 +289,7 @@ namespace settings
         if (!std::filesystem::exists("settings.ini"))
         {
             std::ofstream file("settings.ini");
-            file << "[settings]\nRecursive = false\nHash_threshold = 80\nApp_theme = default\nLanguage = ru";
+            file << "[settings]\nRecursive = false\nHash_threshold = 80\nThread_count = 1\nApp_theme = default\nLanguage = ru";
             file.close();
         }
 
@@ -288,6 +322,23 @@ namespace settings
                     threshold = std::stoi(value);
                 else
                     threshold = 80;
+            }
+            else if (line.find("Thread_count") != std::string::npos)
+            {
+                std::string value = line.substr(line.find('=') + 2);
+
+                bool isNumber = true;
+                for (int i = 0; i < value.length(); i++)
+                    if (!isdigit(value[i]))
+                    {
+                        isNumber = false;
+                        break;
+                    }
+
+                if (isNumber && std::stoi(value) >= 1 && std::stoi(value) <= 100)
+                    threadCount = std::stoi(value);
+                else
+                    threadCount = 1;
             }
             else if (line.find("App_theme") != std::string::npos)
             {
