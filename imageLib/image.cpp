@@ -4,6 +4,7 @@
 #include <jpeglib.h>
 #include <filesystem>
 #include <fstream>
+#include <map>
 
 Image::Image()
 {
@@ -133,25 +134,30 @@ void Image::loadBMP(std::wstring filename)
 
     file.seekg(header.bmp_offset);
 
-    this->width = dibInfo.width;
-    this->height = dibInfo.height;
+    this->width = dibInfo.width <= 0 ? 1 : dibInfo.width;
+    this->height = dibInfo.height <= 0 ? 1 : dibInfo.height;
 
     delete[] this->data;
     this->data = new int[this->width * this->height];
 
-    for (int y = this->height - 1; y >= 0; y--)
+    if (this->width * this->height != 1)
     {
-        for (int x = 0; x < this->width; x++)
+        for (int y = this->height - 1; y >= 0; y--)
         {
-            int r, g, b;
-            b = file.get();
-            g = file.get();
-            r = file.get();
-            this->setPixel(x, y, r, g, b);
-        }
+            for (int x = 0; x < this->width; x++)
+            {
+                int r, g, b;
+                b = file.get();
+                g = file.get();
+                r = file.get();
+                this->setPixel(x, y, r, g, b);
+            }
 
-        file.seekg(this->width % 4, std::ios::cur);
+            file.seekg(this->width % 4, std::ios::cur);
+        }
     }
+    else
+        this->setPixel(0, 0, 0, 0, 0);
 
     file.close();
 
@@ -217,8 +223,8 @@ void Image::loadPNG(std::wstring filename)
     png_set_sig_bytes(png_ptr, 8);
     png_read_info(png_ptr, info_ptr);
 
-    this->width = png_get_image_width(png_ptr, info_ptr);
-    this->height = png_get_image_height(png_ptr, info_ptr);
+    this->width = png_get_image_width(png_ptr, info_ptr) <= 0 ? 1 : png_get_image_width(png_ptr, info_ptr);
+    this->height = png_get_image_height(png_ptr, info_ptr) <= 0 ? 1 : png_get_image_height(png_ptr, info_ptr);
     png_byte color_type = png_get_color_type(png_ptr, info_ptr);
     png_byte bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
@@ -245,31 +251,45 @@ void Image::loadPNG(std::wstring filename)
     delete[] this->data;
     this->data = new int[this->width * this->height];
 
-    png_bytep *row_pointers = (png_bytep *)malloc(sizeof(png_bytep) * this->height);
-    for (int y = 0; y < this->height; y++)
-        row_pointers[y] = (png_byte *)malloc(png_get_rowbytes(png_ptr, info_ptr));
-
-    png_read_image(png_ptr, row_pointers);
-
-    for (int y = 0; y < this->height; y++)
+    if (this->width * this->height != 1)
     {
-        png_bytep row = row_pointers[y];
-        for (int x = 0; x < this->width; x++)
+        png_bytep *row_pointers = (png_bytep *)malloc(sizeof(png_bytep) * this->height);
+        for (int y = 0; y < this->height; y++)
+            row_pointers[y] = (png_byte *)malloc(png_get_rowbytes(png_ptr, info_ptr));
+
+        png_read_image(png_ptr, row_pointers);
+
+        for (int y = 0; y < this->height; y++)
         {
-            png_bytep px = &(row[x * 4]);
-            this->setPixel(x, y, px[0], px[1], px[2]);
+            png_bytep row = row_pointers[y];
+            for (int x = 0; x < this->width; x++)
+            {
+                png_bytep px = &(row[x * 4]);
+                this->setPixel(x, y, px[0], px[1], px[2]);
+            }
         }
+
+        fclose(fp);
+        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+        for (int y = 0; y < this->height; y++)
+            free(row_pointers[y]);
+        free(row_pointers);
+        delete[] path;
+
+        png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+        png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
     }
+    else
+    {
+        this->setPixel(0, 0, 0, 0, 0);
 
-    fclose(fp);
-    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-    for (int y = 0; y < this->height; y++)
-        free(row_pointers[y]);
-    free(row_pointers);
-    delete[] path;
+        fclose(fp);
+        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+        delete[] path;
 
-    png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
-    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+        png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+        png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+    }
 }
 
 void Image::saveJPG(std::wstring filename) const
@@ -329,8 +349,8 @@ void Image::loadJPG(std::wstring filename)
     jpeg_read_header(&cinfo, TRUE);
 
     jpeg_start_decompress(&cinfo);
-    this->width = cinfo.output_width;
-    this->height = cinfo.output_height;
+    this->width = cinfo.output_width <= 0 ? 1 : cinfo.output_width;
+    this->height = cinfo.output_height <= 0 ? 1 : cinfo.output_height;
     int bytes_per_pixel = cinfo.output_components;
 
     delete[] this->data;
@@ -368,15 +388,16 @@ void Image::loadJPG(std::wstring filename)
 
 std::vector<bool> Image::pHash() const
 {
+    // probably will be 16x16 because it will provide 3x time speedup
     int width = 32;
     int height = 32;
     int size = width * height;
     int *resized = new int[size];
-    for (int i = 0; i < size; i++)
-        resized[i] = 0;
+    // for (int i = 0; i < size; i++)
+    //     resized[i] = 0;
 
     if (this->width * this->height == 0)
-        return std::vector<bool>(1, false);
+        return std::vector<bool>(1024, false);
 
     for (int y = 0; y < height; y++)
     {

@@ -63,11 +63,6 @@ void onRowMouseEnter(GtkWidget *label, gint x, gint y, gboolean keyboard_mode, G
     gtk_widget_set_size_request(tooltipWidget, 64, 64);
     GtkImage *image = GTK_IMAGE(gtk_image_new_from_file(UTF16toUTF8(global::currentItems.at(index)).c_str()));
 
-    GtkAllocation allocation;
-    gtk_widget_get_allocation(GTK_WIDGET(image), &allocation);
-    int width = allocation.width;
-    int height = allocation.height;
-
     gtk_image_set_pixel_size(image, 128);
     gtk_box_append(GTK_BOX(tooltipWidget), GTK_WIDGET(image));
 
@@ -203,33 +198,36 @@ void ListBox::addStrings()
 {
     int localIndex = 0;
 
-    for (auto string : global::currentItems)
+    for (auto name : global::currentItems)
     {
-        std::wstring fileName = string.substr(string.find_last_of(L"\\") + 1);
-        GtkWidget *labelInList = gtk_label_new(UTF16toUTF8(fileName).c_str());
-        gtk_widget_set_has_tooltip(labelInList, TRUE);
+        std::wstring fileName = name.substr(name.find_last_of(L"\\") + 1);
+        GtkWidget *label = gtk_label_new(UTF16toUTF8(fileName).c_str());
+        gtk_widget_set_has_tooltip(label, TRUE);
 
-        g_object_set_data(G_OBJECT(labelInList), "listBox", this->listBox);
-        g_object_set_data(G_OBJECT(labelInList), "index", GINT_TO_POINTER(localIndex));
-        g_signal_connect(labelInList, "query-tooltip", G_CALLBACK(onRowMouseEnter), NULL);
+        g_object_set_data(G_OBJECT(label), "listBox", this->listBox);
+        g_object_set_data(G_OBJECT(label), "index", GINT_TO_POINTER(localIndex));
+        g_signal_connect(label, "query-tooltip", G_CALLBACK(onRowMouseEnter), NULL);
 
-        gtk_label_set_ellipsize(GTK_LABEL(labelInList), PANGO_ELLIPSIZE_START);
-        gtk_widget_set_halign(labelInList, GTK_ALIGN_FILL);
-        gtk_list_box_insert(GTK_LIST_BOX(this->listBox), labelInList, -1);
+        gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_START);
+        gtk_widget_set_halign(label, GTK_ALIGN_FILL);
+
+        GtkImage *image = GTK_IMAGE(gtk_image_new_from_file(UTF16toUTF8(name).c_str()));
+        gtk_image_set_pixel_size(image, 48);
+
+        GtkWidget *wrapper = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+        gtk_box_append(GTK_BOX(wrapper), GTK_WIDGET(image));
+        gtk_box_append(GTK_BOX(wrapper), label);
+
+        gtk_list_box_insert(GTK_LIST_BOX(this->listBox), wrapper, -1);
         localIndex++;
     }
 
-    if (global::currentItems.size() >= 14)
-    {
-        GtkWidget *scroll = gtk_scrolled_window_new();
-        gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-        gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scroll), 300);
-        gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), listBox);
+    GtkWidget *scroll = gtk_scrolled_window_new();
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scroll), 300);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), listBox);
 
-        gtk_grid_attach(GTK_GRID(global::grid), scroll, 0, 2, 3, 1);
-    }
-    else
-        gtk_grid_attach(GTK_GRID(global::grid), this->listBox, 0, 2, 3, 1);
+    gtk_grid_attach(GTK_GRID(global::grid), scroll, 0, 2, 3, 1);
 }
 
 void ListBox::createListBox()

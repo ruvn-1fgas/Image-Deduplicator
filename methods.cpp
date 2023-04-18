@@ -115,7 +115,6 @@ Image getImage(std::wstring path)
 
 bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2)
 {
-
     size_t count = 0;
     for (size_t i = 0; i < hash1.size(); i++)
         if (hash1[i] == hash2[i])
@@ -123,13 +122,10 @@ bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2)
 
     return count / (double)hash1.size() > (settings::threshold / 100.0);
 }
-
 std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progressBar)
 {
     std::vector<bool> visited(images.size(), false);
     std::vector<std::vector<bool>> hashes(images.size());
-
-    auto start = std::chrono::high_resolution_clock::now();
 
     if (settings::threadCount > 1)
     {
@@ -150,7 +146,6 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
                     Image img = getImage(images[index]);
                     hashes[index] = img.pHash();
                 } }));
-            // threads[j].detach();
         }
 
         while (i < images.size())
@@ -179,15 +174,6 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
             while (g_main_context_pending(NULL))
                 g_main_context_iteration(NULL, FALSE);
         }
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    if (settings::threadCount > 1)
-        std::cout << "Hash Calc - Threaded version: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-    else
-        std::cout << "Hash Calc - Non-threaded version: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-    start = std::chrono::high_resolution_clock::now();
 
     std::vector<pair> duplicates;
 
@@ -225,16 +211,14 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
                             p.first = images[index];
                             p.second = images[j];
                             guard.lock();
-                            
+
                             duplicates.push_back(p);
-                            
+
                             guard.unlock();
                             visited[j] = true;
                         }
                     }
                 } });
-
-            // threads[j].detach();
         }
 
         while (i < hashes.size())
@@ -279,19 +263,6 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
             while (g_main_context_pending(NULL))
                 g_main_context_iteration(NULL, FALSE);
         }
-
-    end = std::chrono::high_resolution_clock::now();
-
-    if (settings::threadCount > 1)
-        std::cout << "Image Compare - Threaded version: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-    else
-        std::cout << "Image Compare - Non-threaded version: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-    for (auto hash : hashes)
-        hash.clear();
-
-    hashes.clear();
-    visited.clear();
 
     return duplicates;
 }

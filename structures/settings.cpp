@@ -215,13 +215,13 @@ namespace settings
 
         if (lang != language)
         {
-            settingsArr[4] += lang == 1 ? "ru" : "en";
+            settingsArr[5] += lang == 1 ? "ru" : "en";
             language = lang;
             isLangChanged = true;
         }
         else
         {
-            settingsArr[4] += language == 1 ? "ru" : "en";
+            settingsArr[5] += language == 1 ? "ru" : "en";
         }
         if (rec != recursive)
         {
@@ -257,7 +257,7 @@ namespace settings
         }
         if (theme != appTheme)
         {
-            settingsArr[3] += theme == 1 ? "light" : "dark";
+            settingsArr[4] += theme == 1 ? "light" : "dark";
             bool was = appTheme;
             bool is = theme;
             appTheme = theme == 1 ? true : false;
@@ -265,7 +265,7 @@ namespace settings
         }
         else
         {
-            settingsArr[3] += appTheme ? "light" : "dark";
+            settingsArr[4] += appTheme ? "light" : "dark";
         }
 
         std::ofstream file("settings.ini");

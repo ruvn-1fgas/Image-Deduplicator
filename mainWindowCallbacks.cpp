@@ -104,6 +104,10 @@ void settingsButton_clicked(GtkWidget *widget, gpointer data)
     gtk_range_set_value(GTK_RANGE(threadCountSlider), settings::threadCount);
     gtk_scale_set_digits(GTK_SCALE(threadCountSlider), 0);
     gtk_scale_set_draw_value(GTK_SCALE(threadCountSlider), TRUE);
+    gtk_scale_set_format_value_func(
+        GTK_SCALE(threadCountSlider), [](GtkScale *scale, double value, gpointer user_data) -> gchar *
+        { return g_strdup_printf("%d", (int)value); },
+        NULL, NULL);
 
     gtk_widget_set_size_request(threadCountSlider, 200, -1);
 
@@ -156,6 +160,8 @@ void settingsButton_clicked(GtkWidget *widget, gpointer data)
     GtkWidget *applyButton = gtk_dialog_add_button(GTK_DIALOG(dialog), applyButtonText.c_str(), GTK_RESPONSE_APPLY);
 
     gtk_widget_set_margin_end(cancelButton, 10);
+    gtk_widget_set_margin_bottom(cancelButton, 5);
+    gtk_widget_set_margin_bottom(applyButton, 5);
 
     gtk_widget_set_halign(grid, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(grid, GTK_ALIGN_CENTER);
@@ -166,6 +172,7 @@ void settingsButton_clicked(GtkWidget *widget, gpointer data)
     g_object_set_data(G_OBJECT(dialog), "grid", grid);
     g_object_set_data(G_OBJECT(grid), "recursiveCheckbox", recursiveCheckbox);
     g_object_set_data(G_OBJECT(grid), "hashThresholdSlider", hashThresholdSlider);
+    g_object_set_data(G_OBJECT(grid), "threadCountSlider", threadCountSlider);
     g_object_set_data(G_OBJECT(grid), "themeComboBox", themeComboBox);
     g_object_set_data(G_OBJECT(grid), "languageComboBox", languageComboBox);
 
