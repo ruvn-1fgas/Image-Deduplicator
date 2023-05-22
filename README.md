@@ -15,7 +15,7 @@ You can then select the images you want to delete, click right click on the list
 
 ## Contributing
 
-If you find a bug or have a feature request, please open an issue on the GitHub repository: https://github.com/username/Image-Deduplicator/issues.
+If you find a bug or have a feature request, please open an issue on the GitHub repository: https://github.com/ruvn-1fgas/Image-Deduplicator/issues.
 
 If you want to contribute to the project, please fork the repository and submit a pull request with your changes.
 
