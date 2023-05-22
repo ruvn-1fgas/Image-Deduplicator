@@ -116,7 +116,7 @@ namespace language
                                           }},
         {"SettingsDialog.HashThresholdLabel", {
                                                   {0, "Hash threshold"},
-                                                  {1, "Порог схожести"},
+                                                  {1, "Порог сходства"},
                                               }},
         {"SettingsDialog.ThreadCount.Text", {
                                                 {0, "Tread count"},
