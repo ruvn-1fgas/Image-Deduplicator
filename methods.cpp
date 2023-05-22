@@ -5,7 +5,6 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
-#include <chrono>
 
 std::string UTF16toUTF8(std::wstring wString)
 {
@@ -86,7 +85,6 @@ std::vector<std::vector<std::wstring>> compareImages(std::wstring directoryPath,
         }
         listOfDuplicates.push_back(duplicatesList);
     }
-
     return listOfDuplicates;
 }
 
@@ -122,6 +120,7 @@ bool compareHash(std::vector<bool> hash1, std::vector<bool> hash2)
 
     return count / (double)hash1.size() > (settings::threshold / 100.0);
 }
+
 std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progressBar)
 {
     std::vector<bool> visited(images.size(), false);
@@ -132,7 +131,7 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
         std::vector<std::thread> threads;
         std::atomic<size_t> i = 0;
 
-        for (size_t j = 0; j < std::thread::hardware_concurrency(); j++)
+        for (size_t j = 0; j < settings::threadCount; j++)
         {
             threads.push_back(std::thread([&]()
                                           {
@@ -183,7 +182,7 @@ std::vector<pair> phashMethod(std::vector<std::wstring> images, GtkWidget *progr
 
         std::vector<std::thread> threads;
         std::atomic<size_t> i = 0;
-        for (size_t j = 0; j < std::thread::hardware_concurrency(); j++)
+        for (size_t j = 0; j < settings::threadCount; j++)
         {
             threads.emplace_back([&]()
                                  {
