@@ -21,20 +21,19 @@ public:
     void SetPixel(int x, int y, int r, int g, int b);
     void GetPixel(int x, int y, int &r, int &g, int &b) const;
 
-    void SaveBMP(std::wstring filename) const;
+    void SaveBMP(const std::wstring &filename) const;
     void LoadBMP(const std::wstring &filename);
 
-    void SavePNG(std::wstring filename) const;
+    void SavePNG(const std::wstring &filename) const;
     void LoadPNG(const std::wstring &filename);
 
-    void SaveJPG(std::wstring filename) const;
+    void SaveJPG(const std::wstring &filename) const;
     void LoadJPG(const std::wstring &filename);
 
-    std::vector<int> Histogram() const;
-    std::vector<bool> PHashVector() const;
-    uint64_t PHash() const;
+    std::vector<bool> PHash() const;
 
     static int GetSimilarity(const Image &a, const Image &b);
+    static int GetSimilarity(const std::vector<bool> &a, const std::vector<bool> &b);
 
 private:
     int width_, height_;
