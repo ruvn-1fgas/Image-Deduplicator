@@ -1,28 +1,24 @@
 #include "main_window.hpp"
-#include "settings.hpp"
+#include "utility.cpp"
 
 #include <thread>
 
 void settings_dialog_response(GtkDialog *dialog, gint responseId, gpointer data);
 
-// constructor
 MainWindow::MainWindow(GtkApplication *app, gpointer user_data)
 {
     this->app_ = app;
 }
 
-// destructor
 MainWindow::~MainWindow()
 {
 }
 
-// show window
 void MainWindow::Show()
 {
     // gtk_widget_show_all(this->window_);
 }
 
-// setup window
 void MainWindow::SetupWindow()
 {
     // THEME SETUP
@@ -322,10 +318,10 @@ void MainWindow::OnStartButtonClicked(GtkWidget *button, gpointer data)
     }
 
 // cross platform support
-#ifdef _WIN32
+#ifdef _WIN64
 #include <Windows.h>
-    std::wstring directory_path = L"";
-    directory_path.resize(label_text.size());
+    std::wstring directory_path;
+    directory_path.resize(label_text.size(), ' ');
     int newSize = MultiByteToWideChar(CP_UTF8, 0, label_text.c_str(), label_text.size(), &directory_path[0], directory_path.size());
     directory_path.resize(newSize);
 #else // Linux
@@ -358,7 +354,7 @@ void MainWindow::OnStartButtonClicked(GtkWidget *button, gpointer data)
 
     gtk_widget_set_sensitive(button, FALSE);
 
-    // std::vector<std::vector<std::wstring>> duplicates = compareImages(directoryPath, progressBar);
+    std::vector<std::vector<std::wstring>> duplicates = get_duplicates(directory_path, progress_bar);
 
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), 0.0);
     gtk_grid_remove_row(GTK_GRID(data), 8);
