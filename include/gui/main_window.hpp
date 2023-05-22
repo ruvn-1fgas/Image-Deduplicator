@@ -24,62 +24,31 @@ private:
     void SetupWindow();
 
     // Callbacks
+public:
+    virtual void OnExcludeButtonClicked(GtkWidget *button);
+    virtual void OnSettingsButtonClicked(GtkWidget *button);
+    virtual void OnOpenDirButtonClicked(GtkWidget *button);
+    virtual void OnStartButtonClicked(GtkWidget *button);
+
 private:
-    virtual void OnExcludeButtonClicked(GtkWidget *button, gpointer data);
-    virtual void OnSettingsButtonClicked(GtkWidget *button, gpointer data);
-    virtual void OnOpenDirButtonClicked(GtkWidget *button, gpointer data);
-    virtual void OnStartButtonClicked(GtkWidget *button, gpointer data);
-
-    void ExcludeDirButtonClicked(GtkWidget *button, gpointer data)
-    {
-        g_signal_connect(
-            button,
-            "clicked",
-            G_CALLBACK(ExcludeDirButtonClickedCallback), this);
-    }
-
-    void SettingsButtonClicked(GtkWidget *button, gpointer data)
-    {
-        g_signal_connect(
-            button,
-            "clicked",
-            G_CALLBACK(SettingsButtonClickedCallback), this);
-    }
-
-    void OpenDirButtonClicked(GtkWidget *button, gpointer data)
-    {
-        g_signal_connect(
-            button,
-            "clicked",
-            G_CALLBACK(OpenDirButtonClickedCallback), this);
-    }
-
-    void StartButtonClicked(GtkWidget *button, gpointer data)
-    {
-        g_signal_connect(
-            button,
-            "clicked",
-            G_CALLBACK(StartButtonClickedCallback), this);
-    }
-
     static void ExcludeDirButtonClickedCallback(GtkWidget *button, gpointer *data)
     {
-        reinterpret_cast<MainWindow *>(data, data)->OnExcludeButtonClicked(button, data);
+        reinterpret_cast<MainWindow *>(data)->OnExcludeButtonClicked(button);
     }
 
     static void SettingsButtonClickedCallback(GtkWidget *button, gpointer *data)
     {
-        reinterpret_cast<MainWindow *>(data, data)->OnSettingsButtonClicked(button, data);
+        reinterpret_cast<MainWindow *>(data)->OnSettingsButtonClicked(button);
     }
 
     static void OpenDirButtonClickedCallback(GtkWidget *button, gpointer *data)
     {
-        reinterpret_cast<MainWindow *>(data, data)->OnOpenDirButtonClicked(button, data);
+        reinterpret_cast<MainWindow *>(data)->OnOpenDirButtonClicked(button);
     }
 
     static void StartButtonClickedCallback(GtkWidget *button, gpointer *data)
     {
-        reinterpret_cast<MainWindow *>(data, data)->OnStartButtonClicked(button, data);
+        reinterpret_cast<MainWindow *>(data)->OnStartButtonClicked(button);
     }
 };
 
