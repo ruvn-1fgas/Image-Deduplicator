@@ -62,16 +62,15 @@ void Image::Resize(int w)
 
 void Image::SetPixel(int x, int y, int r, int g, int b)
 {
-    data_[(y * width_ + x) * 3 + 0] = r;
-    data_[(y * width_ + x) * 3 + 1] = g;
-    data_[(y * width_ + x) * 3 + 2] = b;
+    data_[y * width_ + x] = (r << 16) | (g << 8) | b;
 }
 
 void Image::GetPixel(int x, int y, int &r, int &g, int &b) const
 {
-    r = data_[(y * width_ + x) * 3 + 0];
-    g = data_[(y * width_ + x) * 3 + 1];
-    b = data_[(y * width_ + x) * 3 + 2];
+    int pixel = data_[y * width_ + x];
+    r = (pixel >> 16) & 0xFF;
+    g = (pixel >> 8) & 0xFF;
+    b = pixel & 0xFF;
 }
 
 void Image::SaveBMP(const std::wstring &filename) const
@@ -411,26 +410,25 @@ void Image::LoadJPG(const std::wstring &filename)
 
     // Open file
     FILE *file = fopen(path, "rb");
-    if (!file)
-    {
-        delete[] path;
-        // handle error
-        return;
-    }
 
     // Initialize JPEG structs
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
+
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_decompress(&cinfo);
+
     jpeg_stdio_src(&cinfo, file);
     jpeg_read_header(&cinfo, TRUE);
+
     jpeg_start_decompress(&cinfo);
 
     // Read image data
     width_ = cinfo.output_width <= 0 ? 1 : cinfo.output_width;
     height_ = cinfo.output_height <= 0 ? 1 : cinfo.output_height;
     int bytes_per_pixel = cinfo.output_components;
+
+    delete[] data_;
     unsigned long int dwBufferBytes = width_ * height_ * 3;
     unsigned char *lpData = (unsigned char *)malloc(sizeof(unsigned char) * dwBufferBytes);
     unsigned char *lpRowBuffer[1];
@@ -455,9 +453,11 @@ void Image::LoadJPG(const std::wstring &filename)
             int r = lpData[(y * width_ + x) * 3 + 0];
             int g = lpData[(y * width_ + x) * 3 + 1];
             int b = lpData[(y * width_ + x) * 3 + 2];
+
             SetPixel(x, y, r, g, b);
         }
     }
+
     free(lpData);
 }
 
@@ -470,7 +470,6 @@ std::vector<bool> Image::PHash() const
     if (width_ * height_ == 0)
         return std::vector<bool>(1024, false);
 
-#pragma omp parallel for
     for (int y = 0; y < height; ++y)
     {
         for (int x = 0; x < width; ++x)
@@ -503,7 +502,7 @@ std::vector<bool> Image::PHash() const
     return hash;
 }
 
-int Image::GetSimilarity(const Image &a, const Image &b)
+double Image::GetSimilarity(const Image &a, const Image &b)
 {
     std::vector<bool> hashA = a.PHash();
     std::vector<bool> hashB = b.PHash();
@@ -515,17 +514,17 @@ int Image::GetSimilarity(const Image &a, const Image &b)
             similarity++;
     }
 
-    return similarity;
+    return similarity / (double)hashA.size();
 }
 
-int Image::GetSimilarity(const std::vector<bool> &a, const std::vector<bool> &b)
+double Image::GetSimilarity(const std::vector<bool> &a, const std::vector<bool> &b)
 {
     int similarity = 0;
-    for (int i = 0; i < a.size(); ++i)
+    for (int i = 0; i < a.size(); i++)
     {
         if (a[i] == b[i])
             similarity++;
     }
 
-    return similarity;
+    return similarity / (double)a.size();
 }
