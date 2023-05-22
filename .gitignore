@@ -2,3 +2,4 @@
 .bin/
 lang.txt
 settings.ini
+*.exe
