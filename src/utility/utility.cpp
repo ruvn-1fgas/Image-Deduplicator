@@ -54,6 +54,7 @@ DuplicatesList get_duplicates(const std::wstring &directory_path, GtkWidget *pro
     }
 
     std::vector<std::pair<std::wstring, std::wstring>> duplicates = get_dupl_pairs(images, progress_bar);
+
     images.clear();
 
     DuplicatesList list_of_duplicates;
@@ -97,82 +98,38 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
     std::vector<std::pair<std::wstring, std::wstring>> duplicates;
     std::vector<std::vector<bool>> hashes(images.size());
 
-    // if (settings::threadCount > 1)
-    // {
-    //     std::vector<std::thread> threads;
-    //     std::atomic<size_t> i = 0;
-
-    //     for (size_t j = 0; j < settings::threadCount; j++)
-    //     {
-    //         threads.push_back(std::thread([&]()
-    //                                       {
-    //             while (i < images.size()) {
-    //             size_t index = i++;
-
-    //             if (index >= images.size()) {
-    //                 return;
-    //             }
-
-    //             Image img = get_image(images[index]);
-    //             hashes[index] = img.PHash();
-
-    //         } }));
-    //     }
-
-    //     while (i < images.size())
-    //     {
-    //         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), i / (double)images.size());
-    //         std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
-    //         char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
-    //         gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
-    //         while (g_main_context_pending(nullptr))
-    //         {
-    //             g_main_context_iteration(nullptr, false);
-    //         }
-    //     }
-
-    //     for (auto &t : threads)
-    //     {
-    //         t.join();
-    //     }
-    // }
-    // else
-    // {
-    //     for (size_t i = 0; i < images.size(); i++)
-    //     {
-    //         Image img = get_image(images[i]);
-    //         hashes[i] = img.PHash();
-    //         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), i / (double)images.size());
-
-    //         std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
-    //         char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
-    //         gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
-    //         while (g_main_context_pending(nullptr))
-    //         {
-    //             g_main_context_iteration(nullptr, false);
-    //         }
-    //     }
-    // }
-
-    std::vector<std::thread> threads;
-    std::atomic<size_t> i = 0;
-
-    auto calculateHashes = [&](size_t start, size_t end)
-    {
-        for (size_t index = start; index < end; ++index)
-        {
-            Image img = get_image(images[index]);
-            hashes[index] = img.PHash();
-        }
-    };
-
     if (settings::threadCount > 1)
     {
-        for (size_t j = 0; j < settings::threadCount; ++j)
+        std::vector<std::thread> threads;
+        std::atomic<size_t> i = 0;
+
+        for (size_t j = 0; j < settings::threadCount; j++)
         {
-            size_t start = i.fetch_add(images.size() / settings::threadCount);
-            size_t end = std::min(start + images.size() / settings::threadCount, images.size());
-            threads.emplace_back(calculateHashes, start, end);
+            threads.push_back(std::thread([&]()
+                                          {
+                while (i < images.size()) {
+                size_t index = i++;
+
+                if (index >= images.size()) {
+                    return;
+                }
+
+                Image img = get_image(images[index]);
+                hashes[index] = img.PHash();
+
+            } }));
+        }
+
+        while (i < images.size())
+        {
+            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), i / (double)images.size());
+            std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
+            char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
+            gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
+            while (g_main_context_pending(nullptr))
+            {
+                g_main_context_iteration(nullptr, false);
+            }
         }
 
         for (auto &t : threads)
@@ -182,18 +139,19 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
     }
     else
     {
-        calculateHashes(0, images.size());
-    }
-
-    for (size_t i = 0; i < images.size(); ++i)
-    {
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), i / (double)images.size());
-        std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
-        char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
-        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
-        while (g_main_context_pending(nullptr))
+        for (size_t i = 0; i < images.size(); i++)
         {
-            g_main_context_iteration(nullptr, false);
+            Image img = get_image(images[i]);
+            hashes[i] = img.PHash();
+            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), i / (double)images.size());
+
+            std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
+            char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
+            gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
+            while (g_main_context_pending(nullptr))
+            {
+                g_main_context_iteration(nullptr, false);
+            }
         }
     }
 
@@ -210,20 +168,29 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
                 while (true) {
                     size_t index = i++;
 
-                    if (index >= hashes.size()) {
-                        break;
+                    if (index >= hashes.size())
+                    {
+                        return;
                     }
 
-                    if (visited[index]) {
+                    if (visited[index]) 
+                    {
                         continue;
                     }
 
-                    for (size_t j = index + 1; j < hashes.size(); j++) {
-                        if (visited[j]) {
+                    for (size_t j = index + 1; j < hashes.size(); j++) 
+                    {
+                        if (j >= images.size())
+                        {
+                            return;
+                        }
+
+                        if (visited[j]) 
+                        {
                             continue;
                         }
 
-                        if (Image::GetSimilarity(hashes[i], hashes[j]) > settings::threshold) {
+                        if (Image::GetSimilarity(hashes[index], hashes[j]) > settings::threshold / 100.0) {
                             std::lock_guard<std::mutex> lock(guard);
                             duplicates.emplace_back(images[index], images[j]);
                             visited[j] = true;
@@ -265,7 +232,7 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
                     continue;
                 }
 
-                if (Image::GetSimilarity(hashes[i], hashes[j]) > settings::threshold)
+                if (Image::GetSimilarity(hashes[i], hashes[j]) > settings::threshold / 100.0)
                 {
                     duplicates.emplace_back(images[i], images[j]);
                     visited[j] = true;
