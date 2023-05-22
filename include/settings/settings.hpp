@@ -10,8 +10,6 @@
 
 #include <gtk/gtk.h>
 
-static void exclude_dir_button_clicked(GtkWidget *widget, gpointer data);
-
 namespace settings
 {
     bool recursive;
@@ -29,6 +27,7 @@ namespace settings
     void (*excludeDirButtonClicked)(GtkWidget *, gpointer);
     void (*openDirButtonClicked)(GtkWidget *, gpointer);
     void (*startButtonClicked)(GtkWidget *, gpointer);
+    void *mainWindow;
 
     void ChangeTheme(bool is_light)
     {
@@ -57,7 +56,8 @@ namespace settings
         GtkWidget *settingsButton = gtk_button_new_from_icon_name("applications-system");
 
         g_object_set_data(G_OBJECT(settingsButton), "window", window);
-        g_signal_connect(settingsButton, "clicked", G_CALLBACK(settingsButtonClicked), NULL);
+
+        g_signal_connect(settingsButton, "clicked", G_CALLBACK(settingsButtonClicked), mainWindow);
 
         gtk_header_bar_pack_end(headerBar, settingsButton);
 
@@ -106,7 +106,7 @@ namespace settings
             g_object_set_data(G_OBJECT(exclude_dir_button_), "window", window);
             g_object_set_data(G_OBJECT(exclude_dir_button_), "dirLabel", dir_label_);
             g_object_set_data(G_OBJECT(exclude_dir_button_), "listOfExcluded", list_of_excluded_);
-            g_signal_connect(exclude_dir_button_, "clicked", G_CALLBACK(excludeDirButtonClicked), NULL);
+            g_signal_connect(exclude_dir_button_, "clicked", G_CALLBACK(excludeDirButtonClicked), mainWindow);
         }
 
         // ====== START BUTTON SETUP ======
@@ -123,14 +123,14 @@ namespace settings
         if (recursive)
             g_object_set_data(G_OBJECT(openDirButton), "listOfExcluded", list_of_excluded_);
 
-        g_signal_connect(openDirButton, "clicked", G_CALLBACK(openDirButtonClicked), NULL);
+        g_signal_connect(openDirButton, "clicked", G_CALLBACK(openDirButtonClicked), mainWindow);
 
         // ======= START BUTTON EVENT =======
 
         g_object_set_data(G_OBJECT(startButton), "dirLabel", dirLabel);
         g_object_set_data(G_OBJECT(startButton), "window", window);
 
-        g_signal_connect(startButton, "clicked", G_CALLBACK(startButtonClicked), main_grid_);
+        g_signal_connect(startButton, "clicked", G_CALLBACK(startButtonClicked), mainWindow);
     }
 
     void ChangeMainWindow(bool was, bool is)
@@ -142,6 +142,9 @@ namespace settings
         }
         if (is)
         {
+            gtk_grid_insert_row(GTK_GRID(main_grid_), 3);
+            gtk_grid_insert_row(GTK_GRID(main_grid_), 4);
+
             std::string exclude_dir_button_text = language::dict["ExcludeDirButtonLabel"][settings::language];
             GtkWidget *exclude_dir_button_ = gtk_button_new_with_label(exclude_dir_button_text.c_str());
             gtk_grid_attach(GTK_GRID(main_grid_), exclude_dir_button_, 0, 3, 2, 1);
@@ -163,7 +166,7 @@ namespace settings
             g_object_set_data(G_OBJECT(exclude_dir_button_), "window", window);
             g_object_set_data(G_OBJECT(exclude_dir_button_), "dirLabel", dir_label_);
             g_object_set_data(G_OBJECT(exclude_dir_button_), "listOfExcluded", list_of_excluded_);
-            g_signal_connect(exclude_dir_button_, "clicked", G_CALLBACK(excludeDirButtonClicked), NULL);
+            g_signal_connect(exclude_dir_button_, "clicked", G_CALLBACK(excludeDirButtonClicked), mainWindow);
         }
     }
 
@@ -180,16 +183,21 @@ namespace settings
         file << "[settings]\nRecursive = " << (rec ? "true" : "false") << "\nHash_threshold = " << thr << "\nThread_count = " << thrCount << "\nApp_theme = " << (theme ? "light" : "dark") << "\nLanguage = " << (lang == 1 ? "ru" : "en") << std::endl;
         file.close();
 
+        bool is_lang_changed = false;
+
         if (lang != language)
         {
+            is_lang_changed = true;
             language = lang;
             ChangeLanguage();
         }
 
-        if (rec != recursive)
+        if (rec != recursive && !is_lang_changed)
         {
+            bool was = recursive;
+            bool is = rec;
             recursive = rec;
-            ChangeMainWindow(recursive, rec);
+            ChangeMainWindow(was, is);
         }
 
         threshold = thr;
