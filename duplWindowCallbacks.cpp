@@ -286,6 +286,26 @@ void ListBox::setItems(std::vector<std::wstring> items)
 
 void onPreviousButtonClicked(GtkButton *button, gpointer data)
 {
+    if (GetKeyState(VK_CONTROL) & 0x8000 && GetKeyState(VK_SHIFT) & 0x8000)
+    {
+        global::index -= 100;
+        if (global::index < 0)
+            global::index = global::duplicates.size() - 1 - (global::index * -1);
+
+        global::listBoxClass->setItems(global::duplicates[global::index]);
+        return;
+    }
+
+    if (GetKeyState(VK_SHIFT) & 0x8000)
+    {
+        global::index -= 10;
+        if (global::index < 0)
+            global::index = global::duplicates.size() - 1 - (global::index * -1);
+
+        global::listBoxClass->setItems(global::duplicates[global::index]);
+        return;
+    }
+
     global::index--;
     if (global::index < 0)
         global::index = global::duplicates.size() - 1;
@@ -295,6 +315,26 @@ void onPreviousButtonClicked(GtkButton *button, gpointer data)
 
 void onNextButtonClicked(GtkButton *button, gpointer data)
 {
+    if (GetKeyState(VK_CONTROL) & 0x8000 && GetKeyState(VK_SHIFT) & 0x8000)
+    {
+        global::index += 100;
+        if (global::index >= global::duplicates.size())
+            global::index = global::index - global::duplicates.size();
+
+        global::listBoxClass->setItems(global::duplicates[global::index]);
+        return;
+    }
+
+    if (GetKeyState(VK_SHIFT) & 0x8000)
+    {
+        global::index += 10;
+        if (global::index >= global::duplicates.size())
+            global::index = global::index - global::duplicates.size();
+
+        global::listBoxClass->setItems(global::duplicates[global::index]);
+        return;
+    }
+
     global::index++;
     if (global::index >= global::duplicates.size())
         global::index = 0;
