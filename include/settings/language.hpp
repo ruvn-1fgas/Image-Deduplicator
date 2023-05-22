@@ -34,10 +34,10 @@ namespace language
                                  {0, "Start"},
                                  {1, "Начать"},
                              }},
-        {"StartButton.Error.DirectorNotChosen", {
-                                                    {0, "Select Directory"},
-                                                    {1, "Выберите директорию"},
-                                                }},
+        {"StartButton.Error.DirectoryNotChosen", {
+                                                     {0, "Select Directory"},
+                                                     {1, "Выберите директорию"},
+                                                 }},
         {"StartButton.Error.DirectoryNotExists", {
                                                      {0, "Directory not exists"},
                                                      {1, "Выбранная директория не существует"},
