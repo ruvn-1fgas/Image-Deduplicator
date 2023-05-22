@@ -7,9 +7,6 @@
 #include "./dupl_window.cpp"
 
 #include <thread>
-#include <iostream>
-
-void settings_dialog_response(GtkDialog *dialog, gint responseId, gpointer data);
 
 static void activate(GtkApplication *app, gpointer user_data)
 {
@@ -54,8 +51,7 @@ void MainWindow::SetupWindow()
 
     this->settings_button_ = gtk_button_new_from_icon_name("applications-system");
 
-    // g_object_set_data(G_OBJECT(this->settings_button_), "window", this->window_);
-    g_signal_connect(this->settings_button_, "clicked", G_CALLBACK(SettingsButtonClickedCallback), NULL);
+    g_signal_connect(this->settings_button_, "clicked", G_CALLBACK(SettingsButtonClickedCallback), this);
 
     gtk_header_bar_pack_end(this->header_bar_, this->settings_button_);
     gtk_window_set_titlebar(GTK_WINDOW(this->window_), GTK_WIDGET(this->header_bar_));
@@ -75,7 +71,7 @@ void MainWindow::SetupWindow()
     gtk_label_set_max_width_chars(GTK_LABEL(dir_label_), 1);
     gtk_label_set_ellipsize(GTK_LABEL(dir_label_), PANGO_ELLIPSIZE_MIDDLE);
     gtk_widget_set_hexpand(dir_label_, TRUE);
-    gtk_widget_set_vexpand(dir_label_, TRUE);
+    gtk_widget_set_halign(dir_label_, GTK_ALIGN_START);
 
     gtk_grid_attach(GTK_GRID(main_grid_), dir_label_, 0, 1, 2, 1);
     gtk_grid_attach(GTK_GRID(main_grid_), gtk_label_new(""), 0, 2, 2, 1);
@@ -99,7 +95,7 @@ void MainWindow::SetupWindow()
         gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), list_of_excluded_);
 
         gtk_grid_attach(GTK_GRID(main_grid_), scrolled_window, 0, 4, 2, 1);
-        g_signal_connect(exclude_dir_button_, "clicked", G_CALLBACK(ExcludeDirButtonClickedCallback), NULL);
+        g_signal_connect(exclude_dir_button_, "clicked", G_CALLBACK(ExcludeDirButtonClickedCallback), this);
     }
 
     // START BUTTON SETUP
@@ -111,11 +107,11 @@ void MainWindow::SetupWindow()
 
     // OPEN DIR BUTTON EVENT
 
-    g_signal_connect(open_dir_button_, "clicked", G_CALLBACK(OpenDirButtonClickedCallback), NULL);
+    g_signal_connect(open_dir_button_, "clicked", G_CALLBACK(OpenDirButtonClickedCallback), this);
 
     // START BUTTON EVENT
 
-    g_signal_connect(start_button_, "clicked", G_CALLBACK(StartButtonClickedCallback), NULL);
+    g_signal_connect(start_button_, "clicked", G_CALLBACK(StartButtonClickedCallback), this);
 
     // SETTINGS SETUP
 
@@ -128,6 +124,7 @@ void MainWindow::SetupWindow()
     settings::window = window_;
     settings::dir_label_ = dir_label_;
     settings::list_of_excluded_ = list_of_excluded_;
+    settings::mainWindow = this;
 
     // ======= WINDOW SHOW =======
 
@@ -139,14 +136,33 @@ void MainWindow::SetupWindow()
     gtk_window_set_default_size(GTK_WINDOW(window_), 480, 320);
 }
 
-void MainWindow::OnSettingsButtonClicked(GtkWidget *widget, gpointer data)
+void settings_dialog_response(GtkDialog *dialog, gint responseId, gpointer data)
 {
-    // GtkWidget *window = reinterpret_cast<GtkWidget *>(g_object_get_data(G_OBJECT(widget), "window"));
+    if (responseId == GTK_RESPONSE_APPLY)
+    {
+        GtkWidget *grid = (GtkWidget *)g_object_get_data(G_OBJECT(dialog), "grid");
 
+        GtkWidget *recursiveCheckbox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "recursiveCheckbox");
+        GtkWidget *hashThresholdSlider = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "hashThresholdSlider");
+        GtkWidget *threadCountSlider = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "threadCountSlider");
+        GtkWidget *themeComboBox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "themeComboBox");
+        GtkWidget *languageComboBox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "languageComboBox");
+
+        bool recursive = gtk_check_button_get_active(GTK_CHECK_BUTTON(recursiveCheckbox));
+        int threshold = gtk_range_get_value(GTK_RANGE(hashThresholdSlider));
+        int threadCount = gtk_range_get_value(GTK_RANGE(threadCountSlider));
+        bool appTheme = gtk_combo_box_get_active(GTK_COMBO_BOX(themeComboBox)) == 0 ? true : false;
+        bool language = gtk_combo_box_get_active(GTK_COMBO_BOX(languageComboBox)) == 0 ? 0 : 1;
+
+        settings::SaveSettings(recursive, threshold, threadCount, appTheme, language);
+    }
+    gtk_window_destroy(GTK_WINDOW(dialog));
+}
+
+void MainWindow::OnSettingsButtonClicked(GtkWidget *widget)
+{
     auto settings_title_bar = language::dict["SettingsDialogTitleBar"][settings::language];
     GtkWidget *dialog = gtk_dialog_new_with_buttons(settings_title_bar.c_str(), GTK_WINDOW(window_), GTK_DIALOG_MODAL, nullptr);
-    
-    std::cout << "test" << '\n';
 
     gtk_window_set_resizable(GTK_WINDOW(dialog), false);
     gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_APPLY);
@@ -279,30 +295,7 @@ void MainWindow::OnSettingsButtonClicked(GtkWidget *widget, gpointer data)
     g_signal_connect(dialog, "response", G_CALLBACK(settings_dialog_response), nullptr);
 }
 
-void settings_dialog_response(GtkDialog *dialog, gint responseId, gpointer data)
-{
-    if (responseId == GTK_RESPONSE_APPLY)
-    {
-        GtkWidget *grid = (GtkWidget *)g_object_get_data(G_OBJECT(dialog), "grid");
-
-        GtkWidget *recursiveCheckbox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "recursiveCheckbox");
-        GtkWidget *hashThresholdSlider = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "hashThresholdSlider");
-        GtkWidget *threadCountSlider = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "threadCountSlider");
-        GtkWidget *themeComboBox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "themeComboBox");
-        GtkWidget *languageComboBox = (GtkWidget *)g_object_get_data(G_OBJECT(grid), "languageComboBox");
-
-        bool recursive = gtk_check_button_get_active(GTK_CHECK_BUTTON(recursiveCheckbox));
-        int threshold = gtk_range_get_value(GTK_RANGE(hashThresholdSlider));
-        int threadCount = gtk_range_get_value(GTK_RANGE(threadCountSlider));
-        bool appTheme = gtk_combo_box_get_active(GTK_COMBO_BOX(themeComboBox)) == 0 ? true : false;
-        bool language = gtk_combo_box_get_active(GTK_COMBO_BOX(languageComboBox)) == 0 ? 0 : 1;
-
-        settings::SaveSettings(recursive, threshold, threadCount, appTheme, language);
-    }
-    gtk_window_destroy(GTK_WINDOW(dialog));
-}
-
-void MainWindow::OnStartButtonClicked(GtkWidget *button, gpointer data)
+void MainWindow::OnStartButtonClicked(GtkWidget *button)
 {
     std::string label_text = gtk_label_get_text(GTK_LABEL(dir_label_));
 
@@ -355,16 +348,16 @@ void MainWindow::OnStartButtonClicked(GtkWidget *button, gpointer data)
     gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress_bar), TRUE);
     gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), "0%");
 
-    gtk_grid_attach(GTK_GRID(data), gtk_label_new(""), 0, 7, 2, 1);
-    gtk_grid_attach(GTK_GRID(data), progress_bar, 0, 8, 2, 1);
+    gtk_grid_attach(GTK_GRID(main_grid_), gtk_label_new(""), 0, 7, 2, 1);
+    gtk_grid_attach(GTK_GRID(main_grid_), progress_bar, 0, 8, 2, 1);
 
     gtk_widget_set_sensitive(button, FALSE);
 
     std::vector<std::vector<std::wstring>> duplicates = get_duplicates(directory_path, progress_bar);
 
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), 0.0);
-    gtk_grid_remove_row(GTK_GRID(data), 8);
-    gtk_grid_remove_row(GTK_GRID(data), 7);
+    gtk_grid_remove_row(GTK_GRID(main_grid_), 8);
+    gtk_grid_remove_row(GTK_GRID(main_grid_), 7);
     gtk_widget_set_sensitive(button, TRUE);
 
     if (duplicates.size() == 0)
@@ -381,7 +374,7 @@ void MainWindow::OnStartButtonClicked(GtkWidget *button, gpointer data)
     }
 
     DuplWindow dupl_window((GtkWindow *)window_, directory_path, duplicates);
-    dupl_window.Show();
+    dupl_window.initialize();
 }
 
 static void file_chooser_open_response(GtkDialog *dialog, int response)
@@ -417,7 +410,7 @@ static void file_chooser_open_response(GtkDialog *dialog, int response)
     gtk_window_destroy(GTK_WINDOW(dialog));
 }
 
-void MainWindow::OnOpenDirButtonClicked(GtkWidget *button, gpointer data)
+void MainWindow::OnOpenDirButtonClicked(GtkWidget *button)
 {
     std::string title_text =
         language::dict["OpenDialog.TitleBar"][settings::language];
@@ -623,11 +616,9 @@ static void file_chooser_exclude(GtkDialog *dialog, int response)
     gtk_window_destroy(GTK_WINDOW(dialog));
 }
 
-void MainWindow::OnExcludeButtonClicked(GtkWidget *button, gpointer data)
+void MainWindow::OnExcludeButtonClicked(GtkWidget *button)
 {
     std::string directory_label_text = gtk_label_get_text(GTK_LABEL(dir_label_));
-
-    // GtkWidget *listOfExcluded = (GtkWidget *)g_object_get_data(G_OBJECT(button), "listOfExcluded");
 
     directory_label_text.erase(0, directory_label_text.find(":") - 1);
     if (directory_label_text.size() == 0)
