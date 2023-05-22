@@ -32,8 +32,8 @@ public:
 
     std::vector<bool> PHash() const;
 
-    static int GetSimilarity(const Image &a, const Image &b);
-    static int GetSimilarity(const std::vector<bool> &a, const std::vector<bool> &b);
+    static double GetSimilarity(const Image &a, const Image &b);
+    static double GetSimilarity(const std::vector<bool> &a, const std::vector<bool> &b);
 
 private:
     int width_, height_;
