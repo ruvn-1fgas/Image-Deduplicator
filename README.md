@@ -1,6 +1,15 @@
 # Image Deduplicator
 
+![Image Deduplicator Logo](https://example.com/logo.png)
+
 Image Deduplicator is a GUI application that helps you find and remove duplicate images from a directory. It uses a combination of image hashing and file comparison to identify duplicate images.
+
+## Features
+
+- Easy-to-use GUI interface
+- Fast and accurate duplicate image detection
+- Ability to delete duplicate images with a single click
+- Supports a wide range of image formats, including JPEG, PNG, and BMP
 
 ## Installation
 
