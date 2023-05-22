@@ -8,7 +8,6 @@ class MainWindow
 public:
     MainWindow(GtkApplication *app, gpointer user_data);
     ~MainWindow();
-
     void Show();
 
 private:
@@ -22,7 +21,6 @@ private:
     GtkWidget *open_dir_button_;
     GtkWidget *dir_label_;
     GtkWidget *start_button_;
-
     void SetupWindow();
 
     // Callbacks
@@ -61,7 +59,7 @@ private:
         g_signal_connect(
             button,
             "clicked",
-            G_CALLBACK(StartButtonClickedCallBack), this);
+            G_CALLBACK(StartButtonClickedCallback), this);
     }
 
     static void ExcludeDirButtonClickedCallback(GtkWidget *button, gpointer *data)
@@ -79,7 +77,7 @@ private:
         reinterpret_cast<MainWindow *>(data, data)->OnOpenDirButtonClicked(button, data);
     }
 
-    static void StartButtonClickedCallBack(GtkWidget *button, gpointer *data)
+    static void StartButtonClickedCallback(GtkWidget *button, gpointer *data)
     {
         reinterpret_cast<MainWindow *>(data, data)->OnStartButtonClicked(button, data);
     }

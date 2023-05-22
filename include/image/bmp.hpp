@@ -1,6 +1,6 @@
 // ifndef
-#ifndef BMP_STRUCTURE_H_
-#define BMP_STRUCTURE_H_
+#ifndef BMP_STRUCTURE_HPP_
+#define BMP_STRUCTURE_HPP_
 
 #include "types.hpp"
 
@@ -33,4 +33,4 @@ struct bmpfile_dib_info
     uint32_t num_important_colors;
 };
 
-#endif // BMP_STRUCTURE_H_
+#endif // BMP_STRUCTURE_HP__

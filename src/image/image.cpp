@@ -1,5 +1,5 @@
-#include "image.hpp"
-#include "bmp.hpp"
+#include "../../include/image/image.hpp"
+#include "../../include/image/bmp.hpp"
 
 #include <algorithm>
 #include <filesystem>

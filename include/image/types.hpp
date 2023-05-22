@@ -1,4 +1,4 @@
-#ifndef TYPES_STRUCTURE_H
+#ifndef TYPES_STRUCTURE_HPP_
 
 typedef unsigned char uchar_t;
 typedef unsigned char uint8_t;
@@ -8,4 +8,4 @@ typedef signed int int32_t;
 typedef signed short int int16_t;
 typedef unsigned long long uint64_t;
 
-#endif // TYPES_STRUCTURE_H
+#endif // TYPES_STRUCTURE_HPP_

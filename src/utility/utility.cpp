@@ -1,5 +1,5 @@
-#include "image.hpp"
-#include "settings.hpp"
+#include "../../include/settings/settings.hpp"
+#include "../image/image.cpp"
 
 #include <thread>
 #include <mutex>
@@ -200,41 +200,32 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
     if (settings::threadCount > 1)
     {
         std::mutex guard;
-
         std::vector<std::thread> threads;
         std::atomic<size_t> i = 0;
+
         for (size_t j = 0; j < settings::threadCount; j++)
         {
             threads.emplace_back([&]()
                                  {
-                while (i < hashes.size())
-                {
+                while (true) {
                     size_t index = i++;
 
-                    if (index >= images.size())
-                        return;
+                    if (index >= hashes.size()) {
+                        break;
+                    }
 
-                    if (visited[index])
+                    if (visited[index]) {
                         continue;
+                    }
 
-                    for (size_t j = index + 1; j < hashes.size(); j++)
-                    {
-                        if (j >= images.size())
-                            return;
-
-                        if (visited[j])
+                    for (size_t j = index + 1; j < hashes.size(); j++) {
+                        if (visited[j]) {
                             continue;
+                        }
 
-                        if (Image::GetSimilarity(hashes[i], hashes[j]) > settings::threshold)
-                        {
-                            std::pair<std::wstring, std::wstring> p;
-                            p.first = images[index];
-                            p.second = images[j];
-                            guard.lock();
-
-                            duplicates.push_back(p);
-
-                            guard.unlock();
+                        if (Image::GetSimilarity(hashes[i], hashes[j]) > settings::threshold) {
+                            std::lock_guard<std::mutex> lock(guard);
+                            duplicates.emplace_back(images[index], images[j]);
                             visited[j] = true;
                         }
                     }
@@ -248,41 +239,55 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
             char *text = g_strdup_printf((imgComp + "%d%%").c_str(), (int)(i / (double)hashes.size() * 100));
             gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
             while (g_main_context_pending(NULL))
+            {
                 g_main_context_iteration(NULL, FALSE);
+            }
         }
 
         for (auto &t : threads)
+        {
             t.join();
+        }
     }
     else
+    {
         for (size_t i = 0; i < hashes.size(); i++)
         {
             if (visited[i])
+            {
                 continue;
+            }
+
             for (size_t j = i + 1; j < hashes.size(); j++)
             {
                 if (visited[j])
+                {
                     continue;
+                }
+
                 if (Image::GetSimilarity(hashes[i], hashes[j]) > settings::threshold)
                 {
-                    std::pair<std::wstring, std::wstring> p;
-                    p.first = images[i];
-                    p.second = images[j];
-                    duplicates.push_back(p);
-
+                    duplicates.emplace_back(images[i], images[j]);
                     visited[j] = true;
                 }
+
                 while (g_main_context_pending(NULL))
+                {
                     g_main_context_iteration(NULL, FALSE);
+                }
             }
 
             gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), i / (double)hashes.size());
             std::string imgComp = language::dict["StartButton.ImageCompareAction"][settings::language];
             char *text = g_strdup_printf((imgComp + "%d%%").c_str(), (size_t)(i / (double)hashes.size() * 100));
             gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
+
             while (g_main_context_pending(NULL))
+            {
                 g_main_context_iteration(NULL, FALSE);
+            }
         }
+    }
 
     return duplicates;
 }
