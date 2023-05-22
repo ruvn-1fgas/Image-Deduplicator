@@ -2,7 +2,7 @@
 #ifndef BMP_STRUCTURE_H_
 #define BMP_STRUCTURE_H_
 
-#include "types.h"
+#include "types.hpp"
 
 // BMP-specific format data
 struct bmpfile_magic
