@@ -1,3 +1,8 @@
+/**
+ * @file settings.hpp
+ * @brief Contains settings related to the application.
+ */
+
 #ifndef SETTINGS_HPP_
 #define SETTINGS_HPP_
 
@@ -12,30 +17,93 @@
 
 namespace settings
 {
+    /**
+     * @brief Whether to search for files recursively.
+     */
     bool recursive;
-    std::vector<std::wstring> excludeList;
-    int threshold;
-    int threadCount;
-    bool appTheme;
-    int language;
 
+    /**
+     * @brief List of directories to exclude from the search.
+     */
+    std::vector<std::wstring> excludeList;
+
+    /**
+     * @brief The minimum similarity threshold for file matching.
+     */
+    int threshold;
+
+    /**
+     * @brief The number of threads to use for searching.
+     */
+    int threadCount;
+
+    /**
+     * @brief Whether to use the application theme.
+     */
+    bool appTheme;
+
+    /**
+     * @brief The language to use for searching.
+     */
+    int lang;
+
+    /**
+     * @brief The main grid widget.
+     */
     GtkWidget *main_grid_;
+    /**
+     * @brief The pointer to the main window widget.
+     */
     GtkWidget *window;
+    /**
+     * @brief The label widget for the directory path.
+     */
     GtkWidget *dir_label_;
+
+    /**
+     * @brief The label widget for the list of excluded directories.
+     */
     GtkWidget *list_of_excluded_;
+
+    /**
+     * @brief The callback function for the settings button click event.
+     */
     void (*settingsButtonClicked)(GtkWidget *, gpointer);
+
+    /**
+     * @brief The callback function for the exclude directory button click event.
+     */
     void (*excludeDirButtonClicked)(GtkWidget *, gpointer);
+
+    /**
+     * @brief The callback function for the open directory button click event.
+     */
     void (*openDirButtonClicked)(GtkWidget *, gpointer);
+
+    /**
+     * @brief The callback function for the start button click event.
+     */
     void (*startButtonClicked)(GtkWidget *, gpointer);
+
+    /**
+     * @brief The pointer to the main window class object.
+     */
     void *mainWindow;
 
+    /**
+     * @brief Changes the theme of the application.
+     * @param is_light Whether to use the light theme.
+     */
     void ChangeTheme(bool is_light)
     {
-        GtkSettings *settings = gtk_settings_get_default();
-        g_object_set(settings, "gtk-theme-name",
-                     is_light ? "Graphite-Light" : "Graphite-Dark", NULL);
+        // GtkSettings *settings = gtk_settings_get_default();
+        // g_object_set(settings, "gtk-theme-name",
+        //              is_light ? "Graphite-Light" : "Graphite-Dark", NULL);
     }
 
+    /**
+     * @brief Changes the language of the application.
+     */
     void ChangeLanguage()
     {
         GtkWidget *iter = gtk_widget_get_first_child(main_grid_);
@@ -65,13 +133,13 @@ namespace settings
 
         // ====== OPEN DIR BUTTON SETUP ======
 
-        std::string openDirButtonText = language::dict["OpenDirButtonLabel"][language];
+        std::string openDirButtonText = language::dict["OpenDirButtonLabel"][lang];
         GtkWidget *openDirButton = gtk_button_new_with_label(openDirButtonText.c_str());
         gtk_grid_attach(GTK_GRID(main_grid_), openDirButton, 0, 0, 2, 1);
 
         // ======= LABEL SETUP =======
 
-        std::string dirLabelText = language::dict["SelectedDirectoryLabel"][language];
+        std::string dirLabelText = language::dict["SelectedDirectoryLabel"][lang];
         GtkWidget *dirLabel = gtk_label_new(dirLabelText.c_str());
 
         gtk_label_set_wrap(GTK_LABEL(dirLabel), TRUE);
@@ -85,7 +153,7 @@ namespace settings
 
         if (recursive)
         {
-            std::string exclude_dir_button_text = language::dict["ExcludeDirButtonLabel"][settings::language];
+            std::string exclude_dir_button_text = language::dict["ExcludeDirButtonLabel"][settings::lang];
             GtkWidget *exclude_dir_button_ = gtk_button_new_with_label(exclude_dir_button_text.c_str());
             gtk_grid_attach(GTK_GRID(main_grid_), exclude_dir_button_, 0, 3, 2, 1);
 
@@ -111,7 +179,7 @@ namespace settings
 
         // ====== START BUTTON SETUP ======
 
-        std::string startButtonText = language::dict["StartButtonLabel"][language];
+        std::string startButtonText = language::dict["StartButtonLabel"][lang];
         GtkWidget *startButton = gtk_button_new_with_label(startButtonText.c_str());
         gtk_widget_set_size_request(startButton, 300, 30);
         gtk_grid_attach(GTK_GRID(main_grid_), startButton, 0, 5, 2, 1);
@@ -133,6 +201,16 @@ namespace settings
         g_signal_connect(startButton, "clicked", G_CALLBACK(startButtonClicked), mainWindow);
     }
 
+    /**
+     * @brief Changes the main window state based on the "Recursive" setting.
+     *
+     * This function changes the state of the main window based on the "Recursive" setting.
+     * If the "Recursive" setting is true, the main window state is set to `is`.
+     * If the "Recursive" setting is false, the main window state is set to `was`.
+     *
+     * @param was The previous state of the main window.
+     * @param is The new state of the main window.
+     */
     void ChangeMainWindow(bool was, bool is)
     {
         if (was)
@@ -145,7 +223,7 @@ namespace settings
             gtk_grid_insert_row(GTK_GRID(main_grid_), 3);
             gtk_grid_insert_row(GTK_GRID(main_grid_), 4);
 
-            std::string exclude_dir_button_text = language::dict["ExcludeDirButtonLabel"][settings::language];
+            std::string exclude_dir_button_text = language::dict["ExcludeDirButtonLabel"][settings::lang];
             GtkWidget *exclude_dir_button_ = gtk_button_new_with_label(exclude_dir_button_text.c_str());
             gtk_grid_attach(GTK_GRID(main_grid_), exclude_dir_button_, 0, 3, 2, 1);
 
@@ -170,25 +248,45 @@ namespace settings
         }
     }
 
+    /**
+     * @brief Saves the current settings to a file.
+     *
+     * This function saves the current settings to a file named "settings.ini".
+     * The settings that are saved include the recursive setting, hash threshold,
+     * thread count, application theme, and language.
+     */
     void SaveSettings()
     {
         std::ofstream file("settings.ini");
-        file << "[settings]\nRecursive = " << (recursive ? "true" : "false") << "\nHash_threshold = " << threshold << "\nThread_count = " << threadCount << "\nApp_theme = " << (appTheme ? "default" : "dark") << "\nLanguage = " << (language ? "ru" : "en") << std::endl;
+        file << "[settings]\nRecursive = " << (recursive ? "true" : "false") << "\nHash_threshold = " << threshold << "\nThread_count = " << threadCount << "\nApp_theme = " << (appTheme ? "default" : "dark") << "\nLanguage = " << (lang ? "ru" : "en") << std::endl;
         file.close();
     }
 
-    void SaveSettings(bool rec, int thr, int thrCount, bool theme, int lang)
+    /**
+     * @brief Saves the specified settings to a file and updates the application state.
+     *
+     * This function saves the specified settings to a file named "settings.ini".
+     * The settings that are saved include the recursive setting, hash threshold,
+     * thread count, application theme, and language.
+     *
+     * @param rec The new value for the recursive setting.
+     * @param thr The new value for the hash threshold.
+     * @param thrCount The new value for the thread count.
+     * @param theme The new value for the application theme.
+     * @param lang_ The new value for the language.
+     */
+    void SaveSettings(bool rec, int thr, int thrCount, bool theme, int lang_)
     {
         std::ofstream file("settings.ini");
-        file << "[settings]\nRecursive = " << (rec ? "true" : "false") << "\nHash_threshold = " << thr << "\nThread_count = " << thrCount << "\nApp_theme = " << (theme ? "light" : "dark") << "\nLanguage = " << (lang == 1 ? "ru" : "en") << std::endl;
+        file << "[settings]\nRecursive = " << (rec ? "true" : "false") << "\nHash_threshold = " << thr << "\nThread_count = " << thrCount << "\nApp_theme = " << (theme ? "light" : "dark") << "\nLanguage = " << (lang_ == 1 ? "ru" : "en") << std::endl;
         file.close();
 
         bool is_lang_changed = false;
 
-        if (lang != language)
+        if (lang_ != lang)
         {
             is_lang_changed = true;
-            language = lang;
+            lang = lang_;
             ChangeLanguage();
         }
 
@@ -206,6 +304,14 @@ namespace settings
         ChangeTheme(theme);
     }
 
+    /**
+     * @brief Loads the settings from a file and updates the application state.
+     *
+     * This function loads the settings from a file named "settings.ini".
+     * The settings that are loaded include the recursive setting, hash threshold,
+     * thread count, application theme, and language.
+     * If the file does not exist, it is created with default settings.
+     */
     void LoadSettings()
     {
         std::ifstream file("settings.ini");
@@ -244,7 +350,7 @@ namespace settings
             }
             else if (line.find("Language") != std::string::npos)
             {
-                language = value == "ru";
+                lang = value == "ru";
             }
         }
     }

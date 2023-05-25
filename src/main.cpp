@@ -1,10 +1,26 @@
-#include <gtk/gtk.h>
-#include "./gui/main_window.cpp"
+/**
+ * @file main.cpp
+ * @brief Entry point for the Image Deduplicator application.
+ */
 
+#include "main_window.hpp"
+
+#include <gtk/gtk.h>
+
+static void activate(GtkApplication *app, gpointer user_data)
+{
+    MainWindow *window = new MainWindow(app, user_data);
+    window->Show();
+}
+
+/**
+ * @brief Main function that initializes the application and runs the main loop.
+ * @param argc The number of command-line arguments.
+ * @param argv The command-line arguments.
+ * @return The exit status of the application.
+ */
 int main(int argc, char **argv)
 {
-    settings::LoadSettings();
-
     GtkApplication *app;
     int status;
 

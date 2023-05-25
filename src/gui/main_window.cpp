@@ -2,17 +2,12 @@
 #include <Windows.h>
 #endif
 
-#include "../../include/gui/main_window.hpp"
+#include "../gui/dupl_window.cpp"
+#include "main_window.hpp"
 #include "../utility/utility.cpp"
-#include "./dupl_window.cpp"
 
+#include <algorithm>
 #include <thread>
-
-static void activate(GtkApplication *app, gpointer user_data)
-{
-    MainWindow *window = new MainWindow(app, user_data);
-    window->Show();
-}
 
 MainWindow::MainWindow(GtkApplication *app, gpointer user_data)
 {
@@ -31,6 +26,8 @@ void MainWindow::Show()
 
 void MainWindow::SetupWindow()
 {
+    settings::LoadSettings();
+
     // THEME SETUP
     GtkSettings *settings = gtk_settings_get_default();
     g_object_set(settings, "gtk-theme-name", settings::appTheme ? "Graphite-Light" : "Graphite-Dark", NULL);
@@ -58,13 +55,13 @@ void MainWindow::SetupWindow()
 
     // OPEN DIR BUTTON SETUP
 
-    std::string open_dir_button_text = language::dict["OpenDirButtonLabel"][settings::language];
+    std::string open_dir_button_text = language::dict["OpenDirButtonLabel"][settings::lang];
     open_dir_button_ = gtk_button_new_with_label(open_dir_button_text.c_str());
     gtk_grid_attach(GTK_GRID(main_grid_), open_dir_button_, 0, 0, 2, 1);
 
     // LABEL SETUP
 
-    std::string dir_label_text = language::dict["SelectedDirectoryLabel"][settings::language];
+    std::string dir_label_text = language::dict["SelectedDirectoryLabel"][settings::lang];
     dir_label_ = gtk_label_new(dir_label_text.c_str());
 
     gtk_label_set_wrap(GTK_LABEL(dir_label_), TRUE);
@@ -78,7 +75,7 @@ void MainWindow::SetupWindow()
 
     if (settings::recursive)
     {
-        std::string exclude_dir_button_text = language::dict["ExcludeDirButtonLabel"][settings::language];
+        std::string exclude_dir_button_text = language::dict["ExcludeDirButtonLabel"][settings::lang];
         exclude_dir_button_ = gtk_button_new_with_label(exclude_dir_button_text.c_str());
         gtk_grid_attach(GTK_GRID(main_grid_), exclude_dir_button_, 0, 3, 2, 1);
 
@@ -100,7 +97,7 @@ void MainWindow::SetupWindow()
 
     // START BUTTON SETUP
 
-    std::string start_button_text = language::dict["StartButtonLabel"][settings::language];
+    std::string start_button_text = language::dict["StartButtonLabel"][settings::lang];
     start_button_ = gtk_button_new_with_label(start_button_text.c_str());
     gtk_widget_set_size_request(start_button_, 300, 30);
     gtk_grid_attach(GTK_GRID(main_grid_), start_button_, 0, 5, 2, 1);
@@ -161,7 +158,7 @@ void settings_dialog_response(GtkDialog *dialog, gint responseId, gpointer data)
 
 void MainWindow::OnSettingsButtonClicked(GtkWidget *widget)
 {
-    auto settings_title_bar = language::dict["SettingsDialogTitleBar"][settings::language];
+    auto settings_title_bar = language::dict["SettingsDialogTitleBar"][settings::lang];
     GtkWidget *dialog = gtk_dialog_new_with_buttons(settings_title_bar.c_str(), GTK_WINDOW(window_), GTK_DIALOG_MODAL, nullptr);
 
     gtk_window_set_resizable(GTK_WINDOW(dialog), false);
@@ -176,7 +173,7 @@ void MainWindow::OnSettingsButtonClicked(GtkWidget *widget)
     gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
 
     // ======= RECURSIVE =======
-    auto rec_label_text = language::dict["SettingsDialog.RecursiveLabel"][settings::language];
+    auto rec_label_text = language::dict["SettingsDialog.RecursiveLabel"][settings::lang];
     GtkWidget *recursive_label = gtk_label_new(rec_label_text.c_str());
     gtk_widget_set_halign(recursive_label, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), recursive_label, 0, 0, 1, 1);
@@ -187,7 +184,7 @@ void MainWindow::OnSettingsButtonClicked(GtkWidget *widget)
     gtk_grid_attach(GTK_GRID(grid), recursive_checkbox, 3, 0, 1, 1);
 
     // ======= HASH THRESHOLD =======
-    auto hash_threshold_label_text = language::dict["SettingsDialog.HashThresholdLabel"][settings::language];
+    auto hash_threshold_label_text = language::dict["SettingsDialog.HashThresholdLabel"][settings::lang];
     GtkWidget *hash_threshold_label = gtk_label_new(hash_threshold_label_text.c_str());
     gtk_widget_set_halign(hash_threshold_label, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), hash_threshold_label, 0, 1, 1, 1);
@@ -208,7 +205,7 @@ void MainWindow::OnSettingsButtonClicked(GtkWidget *widget)
     gtk_grid_attach(GTK_GRID(grid), hash_threshold_slider, 1, 1, 5, 1);
 
     // ======= THREAD COUNT SLIDER =======
-    auto thread_count_label_text = language::dict["SettingsDialog.ThreadCount.Text"][settings::language];
+    auto thread_count_label_text = language::dict["SettingsDialog.ThreadCount.Text"][settings::lang];
     GtkWidget *thread_label = gtk_label_new(thread_count_label_text.c_str());
     gtk_widget_set_halign(thread_label, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), thread_label, 0, 2, 1, 1);
@@ -235,14 +232,14 @@ void MainWindow::OnSettingsButtonClicked(GtkWidget *widget)
     gtk_grid_attach(GTK_GRID(grid), thread_count_slider, 1, 2, 5, 1);
 
     // ======= APP THEME =======
-    auto theme_label_text = language::dict["SettingsDialog.ThemeLabel"][settings::language];
+    auto theme_label_text = language::dict["SettingsDialog.ThemeLabel"][settings::lang];
     GtkWidget *theme_label = gtk_label_new(theme_label_text.c_str());
     gtk_widget_set_halign(theme_label, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), theme_label, 0, 3, 1, 1);
 
     GtkWidget *theme_combo_box = gtk_combo_box_text_new();
-    auto light_text = language::dict["SettingsDialog.ThemeLight"][settings::language];
-    auto dark_text = language::dict["SettingsDialog.ThemeDark"][settings::language];
+    auto light_text = language::dict["SettingsDialog.ThemeLight"][settings::lang];
+    auto dark_text = language::dict["SettingsDialog.ThemeDark"][settings::lang];
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(theme_combo_box), "light", light_text.c_str());
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(theme_combo_box), "dark", dark_text.c_str());
     auto active_id = settings::appTheme ? "light" : "dark";
@@ -250,7 +247,7 @@ void MainWindow::OnSettingsButtonClicked(GtkWidget *widget)
     gtk_grid_attach(GTK_GRID(grid), theme_combo_box, 2, 3, 3, 1);
 
     // ======= LANGUAGE =======
-    auto lang_label_text = language::dict["SettingsDialog.Language"][settings::language];
+    auto lang_label_text = language::dict["SettingsDialog.Language"][settings::lang];
     GtkWidget *language_label = gtk_label_new(lang_label_text.c_str());
     gtk_widget_set_halign(language_label, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), language_label, 0, 4, 1, 1);
@@ -260,7 +257,7 @@ void MainWindow::OnSettingsButtonClicked(GtkWidget *widget)
                               "English");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(language_combo_box), "ru",
                               "Русский");
-    auto active = settings::language ? 1 : 0;
+    auto active = settings::lang ? 1 : 0;
     gtk_combo_box_set_active(GTK_COMBO_BOX(language_combo_box), active);
     gtk_grid_attach(GTK_GRID(grid), language_combo_box, 2, 4, 3, 1);
 
@@ -270,9 +267,9 @@ void MainWindow::OnSettingsButtonClicked(GtkWidget *widget)
     gtk_widget_set_margin_top(grid, 25);
 
     auto cancel_button_text =
-        language::dict["Dialog.CancelOption"][settings::language];
+        language::dict["Dialog.CancelOption"][settings::lang];
     auto apply_button_text =
-        language::dict["Dialog.ApplyOption"][settings::language];
+        language::dict["Dialog.ApplyOption"][settings::lang];
     GtkWidget *cancel_button = gtk_dialog_add_button(GTK_DIALOG(dialog), cancel_button_text.c_str(),
                                                      GTK_RESPONSE_CANCEL);
     GtkWidget *apply_button = gtk_dialog_add_button(GTK_DIALOG(dialog), apply_button_text.c_str(),
@@ -302,7 +299,7 @@ void MainWindow::OnStartButtonClicked(GtkWidget *button)
     label_text.erase(0, label_text.find(":") - 1);
     if (label_text.size() == 0)
     {
-        std::string error_dialog_text = language::dict["StartButton.Error.DirectoryNotChosen"][settings::language];
+        std::string error_dialog_text = language::dict["StartButton.Error.DirectoryNotChosen"][settings::lang];
         GtkWidget *error_dialog = gtk_message_dialog_new(reinterpret_cast<GtkWindow *>(window_), GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, error_dialog_text.c_str());
 
         gtk_window_set_transient_for(GTK_WINDOW(error_dialog), reinterpret_cast<GtkWindow *>(window_));
@@ -332,7 +329,7 @@ void MainWindow::OnStartButtonClicked(GtkWidget *button)
 
     if (!std::filesystem::exists(directory_path))
     {
-        std::string error_dialog_text = language::dict["StartButton.Error.DirectoryNotExists"][settings::language];
+        std::string error_dialog_text = language::dict["StartButton.Error.DirectoryNotExists"][settings::lang];
         GtkWidget *error_dialog = gtk_message_dialog_new(reinterpret_cast<GtkWindow *>(window_), GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, error_dialog_text.c_str());
         gtk_window_set_transient_for(GTK_WINDOW(error_dialog), reinterpret_cast<GtkWindow *>(window_));
         gtk_window_set_modal(GTK_WINDOW(error_dialog), TRUE);
@@ -353,7 +350,7 @@ void MainWindow::OnStartButtonClicked(GtkWidget *button)
 
     gtk_widget_set_sensitive(button, FALSE);
 
-    std::vector<std::vector<std::wstring>> duplicates = get_duplicates(directory_path, progress_bar);
+    std::vector<std::vector<std::wstring>> duplicates = Utility::GetDuplicates(directory_path, progress_bar);
 
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), 0.0);
     gtk_grid_remove_row(GTK_GRID(main_grid_), 8);
@@ -362,7 +359,7 @@ void MainWindow::OnStartButtonClicked(GtkWidget *button)
 
     if (duplicates.size() == 0)
     {
-        std::string result_dialog_text = language::dict["StartButton.Result.NoDuplicates"][settings::language];
+        std::string result_dialog_text = language::dict["StartButton.Result.NoDuplicates"][settings::lang];
         GtkWidget *result_dialog = gtk_message_dialog_new(reinterpret_cast<GtkWindow *>(window_), GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, result_dialog_text.c_str());
         gtk_window_set_transient_for(GTK_WINDOW(result_dialog), reinterpret_cast<GtkWindow *>(window_));
         gtk_window_set_modal(GTK_WINDOW(result_dialog), TRUE);
@@ -399,7 +396,7 @@ static void file_chooser_open_response(GtkDialog *dialog, int response)
 
         char *directory_path = g_file_get_path(folder);
 
-        std::string selected_directory_text = language::dict["OpenDialog.Selected.Text"][settings::language];
+        std::string selected_directory_text = language::dict["OpenDialog.Selected.Text"][settings::lang];
         char *text = g_strdup_printf((selected_directory_text + "%s").c_str(), directory_path);
         gtk_label_set_text(GTK_LABEL(directory_label), text);
         g_free(text);
@@ -413,11 +410,11 @@ static void file_chooser_open_response(GtkDialog *dialog, int response)
 void MainWindow::OnOpenDirButtonClicked(GtkWidget *button)
 {
     std::string title_text =
-        language::dict["OpenDialog.TitleBar"][settings::language];
+        language::dict["OpenDialog.TitleBar"][settings::lang];
     std::string cancel =
-        language::dict["Dialog.CancelOption"][settings::language];
+        language::dict["Dialog.CancelOption"][settings::lang];
     std::string select =
-        language::dict["Dialog.OpenOption"][settings::language];
+        language::dict["Dialog.OpenOption"][settings::lang];
 
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
         title_text.c_str(), (GtkWindow *)window_,
@@ -489,7 +486,7 @@ static void file_chooser_exclude(GtkDialog *dialog, int response)
         {
             std::string error_dialog_text =
                 language::dict["ExcludeDialog.Error.DirectoryIsNotSubDir"]
-                              [settings::language];
+                              [settings::lang];
             GtkWidget *error_dialog = gtk_message_dialog_new(
                 window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
                 error_dialog_text.c_str());
@@ -513,7 +510,7 @@ static void file_chooser_exclude(GtkDialog *dialog, int response)
         {
             std::string error_dialog_text =
                 language::dict["ExcludeDialog.Error.DirectoryIsAlreadyExcluded"]
-                              [settings::language];
+                              [settings::lang];
             GtkWidget *error_dialog = gtk_message_dialog_new(
                 window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
                 error_dialog_text.c_str());
@@ -547,7 +544,7 @@ static void file_chooser_exclude(GtkDialog *dialog, int response)
         {
             std::string error_dialog_text =
                 language::dict["ExcludeDialog.Error.DirectoryIsSubDir"]
-                              [settings::language];
+                              [settings::lang];
             GtkWidget *error_dialog = gtk_message_dialog_new(
                 window, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
                 error_dialog_text.c_str());
@@ -623,7 +620,7 @@ void MainWindow::OnExcludeButtonClicked(GtkWidget *button)
     directory_label_text.erase(0, directory_label_text.find(":") - 1);
     if (directory_label_text.size() == 0)
     {
-        std::string error_dialog_text = language::dict["ExcludeDialog.Error.DirectoryNotChosen"][settings::language];
+        std::string error_dialog_text = language::dict["ExcludeDialog.Error.DirectoryNotChosen"][settings::lang];
         GtkWidget *error_dialog = gtk_message_dialog_new((GtkWindow *)window_, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, error_dialog_text.c_str());
 
         gtk_window_set_transient_for(GTK_WINDOW(error_dialog), (GtkWindow *)window_);
@@ -636,9 +633,9 @@ void MainWindow::OnExcludeButtonClicked(GtkWidget *button)
         return;
     }
 
-    std::string exclude_dialog_title_bar = language::dict["ExcludeDialog.TitleBar"][settings::language];
-    std::string dialog_select_option = language::dict["Dialog.OpenOption"][settings::language];
-    std::string dialog_cancel_option = language::dict["Dialog.CancelOption"][settings::language];
+    std::string exclude_dialog_title_bar = language::dict["ExcludeDialog.TitleBar"][settings::lang];
+    std::string dialog_select_option = language::dict["Dialog.OpenOption"][settings::lang];
+    std::string dialog_cancel_option = language::dict["Dialog.CancelOption"][settings::lang];
 
     GtkWidget *dialog = gtk_file_chooser_dialog_new(exclude_dialog_title_bar.c_str(), (GtkWindow *)window_, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL);
 

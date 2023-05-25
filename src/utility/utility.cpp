@@ -1,4 +1,9 @@
-#include "../../include/settings/settings.hpp"
+/**
+ * @file utility.cpp
+ * @brief Utility class implementation
+ */
+
+#include "utility.hpp"
 #include "../image/image.cpp"
 
 #include <thread>
@@ -9,11 +14,16 @@
 
 #include <gtk/gtk.h>
 
-std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vector<std::wstring> &images, GtkWidget *progress_bar);
-
 using DuplicatesList = std::vector<std::vector<std::wstring>>;
 
-DuplicatesList get_duplicates(const std::wstring &directory_path, GtkWidget *progress_bar)
+/**
+ * @brief Finds duplicate files in the specified directory.
+ *
+ * @param directory_path The path of the directory to search for duplicates in.
+ * @param progress_bar A GTK widget to display the progress of the search.
+ * @return A list of duplicate files found in the directory.
+ */
+DuplicatesList Utility::GetDuplicates(const std::wstring &directory_path, GtkWidget *progress_bar)
 {
     std::vector<std::wstring> images;
 
@@ -53,7 +63,7 @@ DuplicatesList get_duplicates(const std::wstring &directory_path, GtkWidget *pro
         return {};
     }
 
-    std::vector<std::pair<std::wstring, std::wstring>> duplicates = get_dupl_pairs(images, progress_bar);
+    std::vector<std::pair<std::wstring, std::wstring>> duplicates = GetPairsOfDuplicates(images, progress_bar);
 
     images.clear();
 
@@ -78,7 +88,14 @@ DuplicatesList get_duplicates(const std::wstring &directory_path, GtkWidget *pro
     return list_of_duplicates;
 }
 
-Image get_image(std::wstring path)
+/**
+ * @brief Loads an image from the specified file path.
+ *
+ * @param path The file path of the image to load.
+ * @return The loaded image.
+ * @note If the file content is corrupted, an error may occur.
+ */
+Image Utility::GetImage(std::wstring path)
 {
     Image img;
     std::wstring ext = path.substr(path.find_last_of(L".") + 1);
@@ -92,7 +109,13 @@ Image get_image(std::wstring path)
     return img;
 }
 
-std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vector<std::wstring> &images, GtkWidget *progress_bar)
+/**
+ * @brief Finds pairs of duplicate images in a given list.
+ * @param images The list of images to search for duplicates.
+ * @param progress_bar A progress bar to update during the search.
+ * @return A vector of pairs of duplicate image paths.
+ */
+std::vector<std::pair<std::wstring, std::wstring>> Utility::GetPairsOfDuplicates(const std::vector<std::wstring> &images, GtkWidget *progress_bar)
 {
     std::vector<bool> visited(images.size(), false);
     std::vector<std::pair<std::wstring, std::wstring>> duplicates;
@@ -114,7 +137,7 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
                     return;
                 }
 
-                Image img = get_image(images[index]);
+                Image img = GetImage(images[index]);
                 hashes[index] = img.PHash();
 
             } }));
@@ -123,7 +146,7 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
         while (i < images.size())
         {
             gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), i / (double)images.size());
-            std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
+            std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::lang];
             char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
             gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
             while (g_main_context_pending(nullptr))
@@ -141,11 +164,11 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
     {
         for (size_t i = 0; i < images.size(); i++)
         {
-            Image img = get_image(images[i]);
+            Image img = GetImage(images[i]);
             hashes[i] = img.PHash();
             gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), i / (double)images.size());
 
-            std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::language];
+            std::string hashCalc = language::dict["StartButton.HashCalcAction"][settings::lang];
             char *text = g_strdup_printf((hashCalc + "%d/%d").c_str(), i + 1, images.size());
             gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
             while (g_main_context_pending(nullptr))
@@ -202,7 +225,7 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
         while (i < hashes.size())
         {
             gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), i / (double)hashes.size());
-            std::string imgComp = language::dict["StartButton.ImageCompareAction"][settings::language];
+            std::string imgComp = language::dict["StartButton.ImageCompareAction"][settings::lang];
             char *text = g_strdup_printf((imgComp + "%d%%").c_str(), (int)(i / (double)hashes.size() * 100));
             gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
             while (g_main_context_pending(NULL))
@@ -245,7 +268,7 @@ std::vector<std::pair<std::wstring, std::wstring>> get_dupl_pairs(const std::vec
             }
 
             gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), i / (double)hashes.size());
-            std::string imgComp = language::dict["StartButton.ImageCompareAction"][settings::language];
+            std::string imgComp = language::dict["StartButton.ImageCompareAction"][settings::lang];
             char *text = g_strdup_printf((imgComp + "%d%%").c_str(), (size_t)(i / (double)hashes.size() * 100));
             gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), text);
 

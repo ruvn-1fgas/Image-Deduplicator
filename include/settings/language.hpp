@@ -1,3 +1,8 @@
+/**
+ * @file language.hpp
+ * @brief Contains the definition of the language class and the dict map.
+ */
+
 #ifndef LANGUAGE_HPP_
 #define LANGUAGE_HPP_
 
@@ -6,13 +11,15 @@
 
 namespace language
 {
-    /*
-        <key> = {
-            <language> => <value>
-            language is int
-        }
-    */
-
+    /**
+     * @brief A map that stores the translations for different languages.
+     *
+     * The map is structured as follows:
+     * <key> = {
+     *     <language> => <value>
+     *     language is int
+     * }
+     */
     std::map<std::string, std::map<int, std::string>> dict = {
         {"OpenDirButtonLabel", {
                                    {0, "Open directory"},

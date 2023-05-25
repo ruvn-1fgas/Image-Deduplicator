@@ -1,5 +1,10 @@
-#include "../../include/image/image.hpp"
-#include "../../include/image/bmp.hpp"
+/**
+ * @file image.cpp
+ * @brief Implementation of the Image class.
+ */
+
+#include "image.hpp"
+#include "bmp.hpp"
 
 #include <algorithm>
 #include <filesystem>
@@ -10,6 +15,11 @@
 #include <jpeglib.h>
 #include <png.h>
 
+/**
+ * @brief Default constructor for the Image class.
+ *
+ * This constructor initializes the `Image` object with a width and height of 0 and a null data pointer.
+ */
 Image::Image()
 {
     width_ = 0;
@@ -17,6 +27,14 @@ Image::Image()
     data_ = nullptr;
 }
 
+/**
+ * @brief Constructor for the Image class.
+ *
+ * This constructor initializes the `Image` object with the specified width and height.
+ *
+ * @param width The width of the image.
+ * @param height The height of the image.
+ */
 Image::Image(int width, int height)
 {
     width_ = width;
@@ -24,6 +42,14 @@ Image::Image(int width, int height)
     data_ = new int[width * height * 3];
 }
 
+/**
+ * @brief Constructor for the Image class.
+ *
+ * This constructor initializes the `Image` object with the specified width and height.
+ *
+ * @param width The width of the image.
+ * @param height The height of the image.
+ */
 Image::Image(const Image &other)
 {
     width_ = other.width_;
@@ -32,21 +58,39 @@ Image::Image(const Image &other)
     memcpy(data_, other.data_, width_ * height_ * 3 * sizeof(int));
 }
 
+/**
+ * @brief Destructor for the Image class.
+ *
+ * This destructor frees the memory allocated for the image data.
+ */
 Image::~Image()
 {
     delete[] data_;
 }
 
+/**
+ * @brief Gets the width of the image.
+ * @return The width of the image.
+ */
 int Image::GetWidth() const
 {
     return width_;
 }
 
+/**
+ * @brief Gets the height of the image.
+ * @return The height of the image.
+ */
 int Image::GetHeight() const
 {
     return height_;
 }
 
+/**
+ * @brief Resizes the image to the given width and height.
+ * @param w The new width of the image.
+ * @param h The new height of the image.
+ */
 void Image::Resize(int w, int h)
 {
     delete[] data_;
@@ -55,16 +99,36 @@ void Image::Resize(int w, int h)
     data_ = new int[width_ * height_ * 3];
 }
 
+/**
+ * @brief Resizes the image to the given width, keeping the aspect ratio.
+ * @param w The new width of the image.
+ */
 void Image::Resize(int w)
 {
     Resize(w, w);
 }
 
+/**
+ * @brief Sets the pixel at the given position to the given color.
+ * @param x The x-coordinate of the pixel.
+ * @param y The y-coordinate of the pixel.
+ * @param r The red component of the color.
+ * @param g The green component of the color.
+ * @param b The blue component of the color.
+ */
 void Image::SetPixel(int x, int y, int r, int g, int b)
 {
     data_[y * width_ + x] = (r << 16) | (g << 8) | b;
 }
 
+/**
+ * @brief Gets the color of the pixel at the given position.
+ * @param x The x-coordinate of the pixel.
+ * @param y The y-coordinate of the pixel.
+ * @param r The red component of the color.
+ * @param g The green component of the color.
+ * @param b The blue component of the color.
+ */
 void Image::GetPixel(int x, int y, int &r, int &g, int &b) const
 {
     int pixel = data_[y * width_ + x];
@@ -73,6 +137,10 @@ void Image::GetPixel(int x, int y, int &r, int &g, int &b) const
     b = pixel & 0xFF;
 }
 
+/**
+ * @brief Saves the image as a BMP file with the given filename.
+ * @param filename The name of the file to save.
+ */
 void Image::SaveBMP(const std::wstring &filename) const
 {
     // Create the directory for the file if it doesn't exist
@@ -119,6 +187,10 @@ void Image::SaveBMP(const std::wstring &filename) const
     file.close();
 }
 
+/**
+ * @brief Loads the image from a BMP file with the given filename.
+ * @param filename The name of the file to load.
+ */
 void Image::LoadBMP(const std::wstring &filename)
 {
     // Convert the filename to a narrow string
@@ -177,6 +249,10 @@ void Image::LoadBMP(const std::wstring &filename)
     dib_info = {0};
 }
 
+/**
+ * @brief Saves the image as a PNG file with the given filename.
+ * @param filename The name of the file to save.
+ */
 void Image::SavePNG(const std::wstring &filename) const
 {
     // Convert the filename to a string
@@ -258,6 +334,10 @@ void Image::SavePNG(const std::wstring &filename) const
     path.clear();
 }
 
+/**
+ * @brief Loads the image from a PNG file with the given filename.
+ * @param filename The name of the file to load.
+ */
 void Image::LoadPNG(const std::wstring &filename)
 {
     // Convert filename to char*
@@ -356,6 +436,10 @@ void Image::LoadPNG(const std::wstring &filename)
     delete[] path;
 }
 
+/**
+ * @brief Saves the image as a JPG file with the given filename.
+ * @param filename The name of the file to save.
+ */
 void Image::SaveJPG(const std::wstring &filename) const
 {
     // Convert filename to char*
@@ -402,6 +486,10 @@ void Image::SaveJPG(const std::wstring &filename) const
     delete[] path;
 }
 
+/**
+ * @brief Loads the image from a JPG file with the given filename.
+ * @param filename The name of the file to load.
+ */
 void Image::LoadJPG(const std::wstring &filename)
 {
     // Convert filename to char*
@@ -461,15 +549,30 @@ void Image::LoadJPG(const std::wstring &filename)
     free(lpData);
 }
 
+/**
+ * @brief Computes the perceptual hash of the image.
+ *
+ * This function computes the perceptual hash of the image using the pHash algorithm.
+ * The function resizes the image to a fixed size of 32x32 pixels and computes the average
+ * pixel value for each 8x8 block of pixels. The function then compares each pixel value
+ * to the average value and generates a binary hash based on whether the pixel value is
+ * greater than or less than the average value.
+ *
+ * @return A vector of boolean values representing the binary hash of the image.
+ */
 std::vector<bool> Image::PHash() const
 {
+    // Define the target size of the image for the pHash algorithm
     const int width = 32, height = 32, size = width * height;
 
+    // Initialize an array to store the resized pixel values
     int resized[size] = {0};
 
+    // If the image has zero width or height, return a vector of false values
     if (width_ * height_ == 0)
         return std::vector<bool>(1024, false);
 
+    // Resize the image to the target size and compute the average pixel value for each 8x8 block of pixels
     for (int y = 0; y < height; ++y)
     {
         for (int x = 0; x < width; ++x)
@@ -483,25 +586,39 @@ std::vector<bool> Image::PHash() const
             {
                 for (int x3 = x1; x3 < x2; ++x3)
                 {
+                    // Get the pixel values for the current pixel
                     int r, g, b;
                     GetPixel(x3, y3, r, g, b);
+
+                    // Add the pixel values to the sum
                     sum += r + g + b;
                 }
             }
+
+            // Compute the average pixel value for the current 8x8 block of pixels
             resized[y * width + x] = sum / ((x2 - x1) * (y2 - y1));
         }
     }
 
+    // Compute the average pixel value for the entire image
     const int avg = std::accumulate(resized, resized + size, 0) / size;
 
+    // Generate a binary hash based on whether each pixel value is greater than or less than the average value
     std::vector<bool> hash;
     hash.reserve(size);
     std::transform(resized, resized + size, std::back_inserter(hash), [avg](int val)
                    { return val > avg; });
 
+    // Return the binary hash
     return hash;
 }
 
+/**
+ * @brief Computes the similarity between two images.
+ * @param a The first image.
+ * @param b The second image.
+ * @return The similarity between the two images.
+ */
 double Image::GetSimilarity(const Image &a, const Image &b)
 {
     std::vector<bool> hashA = a.PHash();
@@ -517,6 +634,12 @@ double Image::GetSimilarity(const Image &a, const Image &b)
     return similarity / (double)hashA.size();
 }
 
+/**
+ * @brief Computes the similarity between two perceptual hashes.
+ * @param a The first perceptual hash.
+ * @param b The second perceptual hash.
+ * @return The similarity between the two perceptual hashes.
+ */
 double Image::GetSimilarity(const std::vector<bool> &a, const std::vector<bool> &b)
 {
     int similarity = 0;
