@@ -632,7 +632,7 @@ void MainWindow::OnExcludeButtonClicked(GtkWidget *button)
     gtk_window_present(GTK_WINDOW(dialog));
 
     std::wstring directory_path = L"";
-    directory_path.resize(directory_path.size());
+    directory_path.resize(directory_label_text.size());
     int new_size = MultiByteToWideChar(CP_UTF8, 0, directory_label_text.c_str(), directory_label_text.size(), &directory_path[0], directory_path.size());
     directory_path.resize(new_size);
 
