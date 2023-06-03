@@ -96,9 +96,9 @@ namespace settings
      */
     void ChangeTheme(bool is_light)
     {
-        // GtkSettings *settings = gtk_settings_get_default();
-        // g_object_set(settings, "gtk-theme-name",
-        //              is_light ? "Graphite-Light" : "Graphite-Dark", NULL);
+        GtkSettings *settings = gtk_settings_get_default();
+        g_object_set(settings, "gtk-theme-name",
+                     is_light ? "Graphite-Light" : "Graphite-Dark", NULL);
     }
 
     /**
